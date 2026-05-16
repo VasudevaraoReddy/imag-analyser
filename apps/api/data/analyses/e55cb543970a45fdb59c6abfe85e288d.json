@@ -1,0 +1,511 @@
+{
+  "diagram_id": "e55cb543970a45fdb59c6abfe85e288d",
+  "submitted_at": "2026-05-16T09:27:15.891337+00:00",
+  "filename": "1_c93LwmAyXhJobl3S1Mnepw.png",
+  "input_format": "png",
+  "image_dimensions": {
+    "width": 991,
+    "height": 643
+  },
+  "tiles_processed": 1,
+  "cloud_providers": [
+    "azure"
+  ],
+  "primary_provider": "azure",
+  "diagram_style": "official_stencil",
+  "trust_zones": [
+    {
+      "id": "tz-vnet",
+      "name": "eb-demo-vnet",
+      "kind": "internal",
+      "bbox": [
+        185.0,
+        132.0,
+        262.0,
+        157.0
+      ],
+      "evidence": "eb-demo-vnet"
+    },
+    {
+      "id": "tz-web",
+      "name": "eb-demo-subnet-web",
+      "kind": "internal",
+      "bbox": [
+        292.0,
+        182.0,
+        407.0,
+        206.0
+      ],
+      "evidence": "eb-demo-subnet-web"
+    },
+    {
+      "id": "tz-app",
+      "name": "eb-demo-subnet-app",
+      "kind": "internal",
+      "bbox": [
+        593.0,
+        175.0,
+        707.0,
+        203.0
+      ],
+      "evidence": "eb-demo-subnet-app"
+    },
+    {
+      "id": "tz-db",
+      "name": "eb-demo-subnet-db",
+      "kind": "restricted",
+      "bbox": [
+        807.0,
+        175.0,
+        914.0,
+        201.0
+      ],
+      "evidence": "eb-demo-subnet-db"
+    },
+    {
+      "id": "tz-internet",
+      "name": "Internet",
+      "kind": "external",
+      "bbox": null,
+      "evidence": null
+    }
+  ],
+  "components": [
+    {
+      "id": "c-user",
+      "name": "User",
+      "canonical_name": "User",
+      "service_type": "user_actor",
+      "provider": "other",
+      "trust_zone": "tz-internet",
+      "tier": "edge",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "User",
+        "bbox": [
+          34.0,
+          319.0,
+          61.0,
+          330.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-admin",
+      "name": "Admin",
+      "canonical_name": "Admin",
+      "service_type": "user_actor",
+      "provider": "other",
+      "trust_zone": "tz-internet",
+      "tier": "management",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Admin",
+        "bbox": [
+          156.0,
+          625.0,
+          192.0,
+          637.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-web-lb",
+      "name": "web-lb",
+      "canonical_name": "web-lb",
+      "service_type": "load_balancer",
+      "provider": "azure",
+      "trust_zone": "tz-web",
+      "tier": "edge",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "web-lb",
+        "bbox": [
+          190.0,
+          312.0,
+          228.0,
+          323.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-web-vm-1",
+      "name": "web-vm-1",
+      "canonical_name": "web-vm-1",
+      "service_type": "compute_vm",
+      "provider": "azure",
+      "trust_zone": "tz-web",
+      "tier": "web",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "web-vm-1",
+        "bbox": [
+          314.0,
+          277.0,
+          369.0,
+          290.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-web-vm-2",
+      "name": "web-vm-2",
+      "canonical_name": "web-vm-2",
+      "service_type": "compute_vm",
+      "provider": "azure",
+      "trust_zone": "tz-web",
+      "tier": "web",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "web-vm-2",
+        "bbox": [
+          317.0,
+          387.0,
+          372.0,
+          399.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-app-ilb",
+      "name": "ap-ilb",
+      "canonical_name": "ap-ilb",
+      "service_type": "load_balancer",
+      "provider": "azure",
+      "trust_zone": "tz-app",
+      "tier": "integration",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "ap-ilb",
+        "bbox": [
+          475.0,
+          318.0,
+          507.0,
+          331.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-app-vm-1",
+      "name": "app-vm-1",
+      "canonical_name": "app-vm-1",
+      "service_type": "compute_vm",
+      "provider": "azure",
+      "trust_zone": "tz-app",
+      "tier": "app",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "app-vm-1",
+        "bbox": [
+          611.0,
+          278.0,
+          663.0,
+          290.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-app-vm-2",
+      "name": "app-vm-2",
+      "canonical_name": "app-vm-2",
+      "service_type": "compute_vm",
+      "provider": "azure",
+      "trust_zone": "tz-app",
+      "tier": "app",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "app-vm-2",
+        "bbox": [
+          608.0,
+          381.0,
+          661.0,
+          395.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-db-vm",
+      "name": "db-vm",
+      "canonical_name": "db-vm",
+      "service_type": "database_relational",
+      "provider": "azure",
+      "trust_zone": "tz-db",
+      "tier": "data",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "db-vm",
+        "bbox": [
+          841.0,
+          393.0,
+          876.0,
+          404.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-jump-vm",
+      "name": "Jump vm",
+      "canonical_name": "Jump vm",
+      "service_type": "compute_vm",
+      "provider": "azure",
+      "trust_zone": "tz-app",
+      "tier": "management",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Jump vm",
+        "bbox": [
+          397.0,
+          511.0,
+          447.0,
+          523.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "c-user",
+      "to": "c-web-lb",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e2",
+      "from": "c-web-lb",
+      "to": "c-web-vm-1",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e3",
+      "from": "c-web-lb",
+      "to": "c-web-vm-2",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e4",
+      "from": "c-web-vm-1",
+      "to": "c-app-ilb",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e5",
+      "from": "c-web-vm-2",
+      "to": "c-app-ilb",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e6",
+      "from": "c-app-ilb",
+      "to": "c-app-vm-1",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e7",
+      "from": "c-app-ilb",
+      "to": "c-app-vm-2",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e8",
+      "from": "c-app-vm-1",
+      "to": "c-db-vm",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e9",
+      "from": "c-app-vm-2",
+      "to": "c-db-vm",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e10",
+      "from": "c-admin",
+      "to": "c-jump-vm",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    }
+  ],
+  "flows": {
+    "north_south": [
+      "e1",
+      "e8",
+      "e9",
+      "e10"
+    ],
+    "east_west": [
+      "e2",
+      "e3",
+      "e4",
+      "e5",
+      "e6",
+      "e7"
+    ]
+  },
+  "compliance_findings": [
+    {
+      "rule": "WAF_BEFORE_APP",
+      "status": "fail",
+      "severity": "high",
+      "message": "External traffic terminates on a component that is not an edge guard (WAF / CDN / API gateway / load balancer).",
+      "affected_component_ids": [],
+      "affected_connection_ids": [
+        "e10"
+      ]
+    },
+    {
+      "rule": "NO_PUBLIC_DATA_TIER",
+      "status": "pass",
+      "severity": "info",
+      "message": "No data-tier components are exposed in a public trust zone.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "TLS_ON_EXTERNAL_EDGES",
+      "status": "warn",
+      "severity": "medium",
+      "message": "Encryption could not be confirmed on one or more external edges.",
+      "affected_component_ids": [],
+      "affected_connection_ids": [
+        "e1",
+        "e8",
+        "e9",
+        "e10"
+      ]
+    },
+    {
+      "rule": "ENCRYPTION_TO_RESTRICTED",
+      "status": "warn",
+      "severity": "medium",
+      "message": "Encryption could not be confirmed on edges entering a restricted zone.",
+      "affected_component_ids": [],
+      "affected_connection_ids": [
+        "e8",
+        "e9"
+      ]
+    },
+    {
+      "rule": "PRIVATE_ENDPOINTS_FOR_PAAS",
+      "status": "warn",
+      "severity": "medium",
+      "message": "Azure PaaS components lack a Private Endpoint in their trust zone.",
+      "affected_component_ids": [
+        "c-db-vm"
+      ],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "IDENTITY_PRESENT",
+      "status": "warn",
+      "severity": "medium",
+      "message": "External flows exist but no identity provider is shown.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "LOGGING_PRESENT",
+      "status": "warn",
+      "severity": "low",
+      "message": "No logging, monitoring, or SIEM component shown on the diagram.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "SECRETS_VAULT_PRESENT",
+      "status": "warn",
+      "severity": "low",
+      "message": "Databases or third-party SaaS present, but no secrets vault is shown.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    }
+  ],
+  "parsing_warnings": [],
+  "overall_confidence": 0.9,
+  "review_state": "needs_human_review",
+  "processing_ms": {
+    "image_prep": 41,
+    "doc_intelligence": 4719,
+    "vision_llm": 28641,
+    "post_process": 4,
+    "total": 33405
+  }
+}

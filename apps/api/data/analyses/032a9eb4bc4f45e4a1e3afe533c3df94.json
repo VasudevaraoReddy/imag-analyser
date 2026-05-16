@@ -1,0 +1,668 @@
+{
+  "diagram_id": "032a9eb4bc4f45e4a1e3afe533c3df94",
+  "submitted_at": "2026-05-16T09:57:01.603239+00:00",
+  "filename": "WhatsApp Image 2026-05-16 at 3.25.01 PM.jpeg",
+  "input_format": "jpg",
+  "image_dimensions": {
+    "width": 1279,
+    "height": 844
+  },
+  "tiles_processed": 1,
+  "cloud_providers": [
+    "on_prem"
+  ],
+  "primary_provider": "on_prem",
+  "diagram_style": "official_stencil",
+  "trust_zones": [
+    {
+      "id": "tz-internal-user",
+      "name": "Internal User",
+      "kind": "external",
+      "bbox": null,
+      "evidence": "Detected from label 'Internal User'"
+    },
+    {
+      "id": "tz-delta-prod",
+      "name": "Delta Data Center - Prod",
+      "kind": "internal",
+      "bbox": [
+        33.0,
+        193.0,
+        192.0,
+        210.0
+      ],
+      "evidence": "Detected from label 'Delta Data Center - Prod'"
+    },
+    {
+      "id": "tz-charlie-dr",
+      "name": "Charlie Data Center - DR",
+      "kind": "internal",
+      "bbox": [
+        878.0,
+        209.0,
+        1036.0,
+        224.0
+      ],
+      "evidence": "Detected from label 'Charlie Data Center - DR'"
+    },
+    {
+      "id": "tz-interfacing-apps",
+      "name": "Interfacing Applications",
+      "kind": "internal",
+      "bbox": [
+        498.0,
+        197.0,
+        654.0,
+        215.0
+      ],
+      "evidence": "Detected from label 'Interfacing Applications'"
+    },
+    {
+      "id": "tz-db-zone-prod",
+      "name": "DB Zone",
+      "kind": "restricted",
+      "bbox": [
+        62.0,
+        572.0,
+        116.0,
+        584.0
+      ],
+      "evidence": "Detected from label 'DB Zone'"
+    },
+    {
+      "id": "tz-db-zone-dr",
+      "name": "DB Zone",
+      "kind": "restricted",
+      "bbox": [
+        899.0,
+        579.0,
+        951.0,
+        592.0
+      ],
+      "evidence": "Detected from label 'DB Zone'"
+    }
+  ],
+  "components": [
+    {
+      "id": "c-internal-user",
+      "name": "Internal User",
+      "canonical_name": "User",
+      "service_type": "user_actor",
+      "provider": "other",
+      "trust_zone": "tz-internal-user",
+      "tier": "edge",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Internal User",
+        "bbox": [
+          496.0,
+          52.0,
+          566.0,
+          66.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-delta-load-balancer",
+      "name": "Load Balancer",
+      "canonical_name": "Load Balancer",
+      "service_type": "load_balancer",
+      "provider": "on_prem",
+      "trust_zone": "tz-delta-prod",
+      "tier": "web",
+      "redundancy": "multi_az",
+      "evidence": {
+        "ocr_text": "Load Balancer",
+        "bbox": [
+          179.0,
+          279.0,
+          264.0,
+          293.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-delta-app-server-1",
+      "name": "App Server 1",
+      "canonical_name": "App Server 1",
+      "service_type": "compute_vm",
+      "provider": "on_prem",
+      "trust_zone": "tz-delta-prod",
+      "tier": "app",
+      "redundancy": "single",
+      "evidence": {
+        "ocr_text": "App Server 1",
+        "bbox": [
+          99.0,
+          376.0,
+          176.0,
+          392.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-delta-app-server-2",
+      "name": "App Server 2",
+      "canonical_name": "App Server 2",
+      "service_type": "compute_vm",
+      "provider": "on_prem",
+      "trust_zone": "tz-delta-prod",
+      "tier": "app",
+      "redundancy": "single",
+      "evidence": {
+        "ocr_text": "App Server 2",
+        "bbox": [
+          266.0,
+          376.0,
+          344.0,
+          392.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-delta-db-server-1",
+      "name": "DB Server 1",
+      "canonical_name": "DB Server 1",
+      "service_type": "database_relational",
+      "provider": "on_prem",
+      "trust_zone": "tz-db-zone-prod",
+      "tier": "data",
+      "redundancy": "single",
+      "evidence": {
+        "ocr_text": "DB Server 1",
+        "bbox": [
+          106.0,
+          671.0,
+          174.0,
+          685.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-delta-db-server-2",
+      "name": "DB Server 2",
+      "canonical_name": "DB Server 2",
+      "service_type": "database_relational",
+      "provider": "on_prem",
+      "trust_zone": "tz-db-zone-prod",
+      "tier": "data",
+      "redundancy": "single",
+      "evidence": {
+        "ocr_text": "DB Server 2",
+        "bbox": [
+          270.0,
+          669.0,
+          339.0,
+          684.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-charlie-load-balancer",
+      "name": "Load Balancer",
+      "canonical_name": "Load Balancer",
+      "service_type": "load_balancer",
+      "provider": "on_prem",
+      "trust_zone": "tz-charlie-dr",
+      "tier": "web",
+      "redundancy": "multi_az",
+      "evidence": {
+        "ocr_text": "Load Balancer",
+        "bbox": [
+          1016.0,
+          293.0,
+          1097.0,
+          306.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-charlie-app-server-1",
+      "name": "App Server 1",
+      "canonical_name": "App Server 1",
+      "service_type": "compute_vm",
+      "provider": "on_prem",
+      "trust_zone": "tz-charlie-dr",
+      "tier": "app",
+      "redundancy": "single",
+      "evidence": {
+        "ocr_text": "App Server 1",
+        "bbox": [
+          938.0,
+          388.0,
+          1013.0,
+          403.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-charlie-app-server-2",
+      "name": "App Server 2",
+      "canonical_name": "App Server 2",
+      "service_type": "compute_vm",
+      "provider": "on_prem",
+      "trust_zone": "tz-charlie-dr",
+      "tier": "app",
+      "redundancy": "single",
+      "evidence": {
+        "ocr_text": "App Server 2",
+        "bbox": [
+          1098.0,
+          388.0,
+          1173.0,
+          403.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-charlie-db-server-1",
+      "name": "DB Server 1",
+      "canonical_name": "DB Server 1",
+      "service_type": "database_relational",
+      "provider": "on_prem",
+      "trust_zone": "tz-db-zone-dr",
+      "tier": "data",
+      "redundancy": "single",
+      "evidence": {
+        "ocr_text": "DB Server 1",
+        "bbox": [
+          950.0,
+          676.0,
+          1016.0,
+          690.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-charlie-db-server-2",
+      "name": "DB Server 2",
+      "canonical_name": "DB Server 2",
+      "service_type": "database_relational",
+      "provider": "on_prem",
+      "trust_zone": "tz-db-zone-dr",
+      "tier": "data",
+      "redundancy": "single",
+      "evidence": {
+        "ocr_text": "DB Server 2",
+        "bbox": [
+          1098.0,
+          675.0,
+          1164.0,
+          689.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-ldap",
+      "name": "LDAP",
+      "canonical_name": "LDAP",
+      "service_type": "identity",
+      "provider": "on_prem",
+      "trust_zone": "tz-interfacing-apps",
+      "tier": "integration",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "LDAP",
+        "bbox": [
+          634.0,
+          278.0,
+          671.0,
+          292.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-idp",
+      "name": "IDP",
+      "canonical_name": "IDP",
+      "service_type": "identity",
+      "provider": "on_prem",
+      "trust_zone": "tz-interfacing-apps",
+      "tier": "integration",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "IDP",
+        "bbox": [
+          640.0,
+          364.0,
+          663.0,
+          376.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-smtp",
+      "name": "SMTP",
+      "canonical_name": "SMTP",
+      "service_type": "unknown",
+      "provider": "on_prem",
+      "trust_zone": "tz-interfacing-apps",
+      "tier": "integration",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "SMTP",
+        "bbox": [
+          626.0,
+          427.0,
+          663.0,
+          440.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-fcc-staging-db",
+      "name": "FCC Staging DB",
+      "canonical_name": "FCC Staging DB",
+      "service_type": "database_relational",
+      "provider": "on_prem",
+      "trust_zone": "tz-interfacing-apps",
+      "tier": "data",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "FCC Staging DB",
+        "bbox": [
+          609.0,
+          526.0,
+          683.0,
+          544.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-murex-db",
+      "name": "Murex DB",
+      "canonical_name": "Murex DB",
+      "service_type": "database_relational",
+      "provider": "on_prem",
+      "trust_zone": "tz-interfacing-apps",
+      "tier": "data",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Murex DB",
+        "bbox": [
+          618.0,
+          618.0,
+          679.0,
+          632.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-notiva-db",
+      "name": "Notiva DB",
+      "canonical_name": "Notiva DB",
+      "service_type": "database_relational",
+      "provider": "on_prem",
+      "trust_zone": "tz-interfacing-apps",
+      "tier": "data",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Notiva DB",
+        "bbox": [
+          615.0,
+          739.0,
+          676.0,
+          753.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "c-internal-user",
+      "to": "c-delta-load-balancer",
+      "label": "443",
+      "protocol": "HTTPS",
+      "port": 443,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e2",
+      "from": "c-internal-user",
+      "to": "c-charlie-load-balancer",
+      "label": "443",
+      "protocol": "HTTPS",
+      "port": 443,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e3",
+      "from": "c-delta-load-balancer",
+      "to": "c-delta-app-server-1",
+      "label": "9001/9002",
+      "protocol": "HTTP",
+      "port": null,
+      "encrypted": false,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e4",
+      "from": "c-delta-load-balancer",
+      "to": "c-delta-app-server-2",
+      "label": "9001/9002",
+      "protocol": "HTTP",
+      "port": null,
+      "encrypted": false,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e5",
+      "from": "c-charlie-load-balancer",
+      "to": "c-charlie-app-server-1",
+      "label": "9001/9002",
+      "protocol": "HTTP",
+      "port": null,
+      "encrypted": false,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e6",
+      "from": "c-charlie-load-balancer",
+      "to": "c-charlie-app-server-2",
+      "label": "9001/9002",
+      "protocol": "HTTP",
+      "port": null,
+      "encrypted": false,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e7",
+      "from": "c-delta-app-server-1",
+      "to": "c-delta-db-server-1",
+      "label": "1621/1651",
+      "protocol": "ODBC",
+      "port": null,
+      "encrypted": false,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e8",
+      "from": "c-delta-app-server-2",
+      "to": "c-delta-db-server-2",
+      "label": "1621/1651",
+      "protocol": "ODBC",
+      "port": null,
+      "encrypted": false,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e9",
+      "from": "c-charlie-app-server-1",
+      "to": "c-charlie-db-server-1",
+      "label": "1621/1651",
+      "protocol": "ODBC",
+      "port": null,
+      "encrypted": false,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e10",
+      "from": "c-charlie-app-server-2",
+      "to": "c-charlie-db-server-2",
+      "label": "1621/1651",
+      "protocol": "ODBC",
+      "port": null,
+      "encrypted": false,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    }
+  ],
+  "flows": {
+    "north_south": [
+      "e1",
+      "e2",
+      "e7",
+      "e8",
+      "e9",
+      "e10"
+    ],
+    "east_west": [
+      "e3",
+      "e4",
+      "e5",
+      "e6"
+    ]
+  },
+  "compliance_findings": [
+    {
+      "rule": "WAF_BEFORE_APP",
+      "status": "pass",
+      "severity": "info",
+      "message": "All external ingress passes through an edge guard (WAF / CDN / API gateway / load balancer).",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "NO_PUBLIC_DATA_TIER",
+      "status": "pass",
+      "severity": "info",
+      "message": "No data-tier components are exposed in a public trust zone.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "TLS_ON_EXTERNAL_EDGES",
+      "status": "fail",
+      "severity": "high",
+      "message": "External edges use plaintext protocols (HTTP/FTP/Telnet/AMQP/MQTT).",
+      "affected_component_ids": [],
+      "affected_connection_ids": [
+        "e7",
+        "e8",
+        "e9",
+        "e10"
+      ]
+    },
+    {
+      "rule": "ENCRYPTION_TO_RESTRICTED",
+      "status": "fail",
+      "severity": "high",
+      "message": "Edges to restricted zones use plaintext protocols.",
+      "affected_component_ids": [],
+      "affected_connection_ids": [
+        "e7",
+        "e8",
+        "e9",
+        "e10"
+      ]
+    },
+    {
+      "rule": "PRIVATE_ENDPOINTS_FOR_PAAS",
+      "status": "not_applicable",
+      "severity": "info",
+      "message": "No Azure PaaS components detected.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "IDENTITY_PRESENT",
+      "status": "pass",
+      "severity": "info",
+      "message": "Identity provider is present.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "LOGGING_PRESENT",
+      "status": "warn",
+      "severity": "low",
+      "message": "No logging, monitoring, or SIEM component shown on the diagram.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "SECRETS_VAULT_PRESENT",
+      "status": "warn",
+      "severity": "low",
+      "message": "Databases or third-party SaaS present, but no secrets vault is shown.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    }
+  ],
+  "parsing_warnings": [],
+  "overall_confidence": 0.9,
+  "review_state": "needs_human_review",
+  "processing_ms": {
+    "image_prep": 99,
+    "doc_intelligence": 9370,
+    "vision_llm": 92261,
+    "post_process": 5,
+    "total": 101735
+  }
+}
