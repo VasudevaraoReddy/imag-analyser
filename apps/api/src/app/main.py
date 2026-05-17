@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .config import get_settings
-from .routers import analyze, health
+from .routers import analyze, chat, health
 
 
 def _configure_logging() -> None:
@@ -87,6 +87,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router, prefix="/api")
     app.include_router(analyze.router, prefix="/api")
+    app.include_router(chat.router, prefix="/api")
 
     # TODO(auth): add Entra ID / OAuth middleware here before exposing
     # this service to non-localhost traffic.

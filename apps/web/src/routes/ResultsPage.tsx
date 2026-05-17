@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import clsx from "clsx";
-import { Download, FileText, Layers, ChevronLeft } from "lucide-react";
+import { Download, FileText, Layers, ChevronLeft, MessageSquare } from "lucide-react";
 import { getAnalysis, processedImageUrl, imageUrl } from "../lib/api";
 import { ComponentsTable } from "../components/ComponentsTable";
 import { FlowsTable } from "../components/FlowsTable";
@@ -70,10 +70,13 @@ export default function ResultsPage() {
     <div className="max-w-7xl mx-auto p-6 space-y-5">
       {/* Breadcrumb */}
       <div className="flex items-center justify-between gap-3">
-        <Link to="/history" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
-          <ChevronLeft className="w-4 h-4" /> Back to history
+        <Link to="/reviews" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+          <ChevronLeft className="w-4 h-4" /> Back to Arc Reviews
         </Link>
         <div className="flex gap-2">
+          <Link to={`/chat?analysis_id=${data.diagram_id}`} className="btn-secondary">
+            <MessageSquare className="w-4 h-4" /> Ask the bot
+          </Link>
           <Link to={`/results/${data.diagram_id}/report`} className="btn-primary">
             <FileText className="w-4 h-4" /> View report
           </Link>
@@ -87,12 +90,22 @@ export default function ResultsPage() {
       <div className="card p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="text-xs uppercase tracking-wider text-slate-500">Analysis</div>
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900 truncate">
-              {data.filename}
+            <div className="flex items-center gap-2">
+              {data.arc_number && (
+                <span className="pill bg-brand-50 text-brand-700 ring-1 ring-brand-200 font-mono">
+                  {data.arc_number}
+                </span>
+              )}
+              <div className="text-xs uppercase tracking-wider text-slate-500">Architecture Review</div>
+            </div>
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900 truncate mt-1">
+              {data.title || data.filename}
             </h1>
-            <div className="text-xs text-slate-500 mt-0.5">
-              {data.diagram_id} · {new Date(data.submitted_at).toLocaleString()}
+            {data.description && (
+              <p className="text-sm text-slate-600 mt-1 line-clamp-2">{data.description}</p>
+            )}
+            <div className="text-xs text-slate-500 mt-1">
+              {data.filename} · {new Date(data.submitted_at).toLocaleString()}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">

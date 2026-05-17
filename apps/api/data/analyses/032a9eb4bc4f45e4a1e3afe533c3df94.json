@@ -1,6 +1,9 @@
 {
   "diagram_id": "032a9eb4bc4f45e4a1e3afe533c3df94",
   "submitted_at": "2026-05-16T09:57:01.603239+00:00",
+  "arc_number": "ARC-202605-003",
+  "title": "eBranch Demo VNet — Prod",
+  "description": "This is a description of the diagram.",
   "filename": "WhatsApp Image 2026-05-16 at 3.25.01 PM.jpeg",
   "input_format": "jpg",
   "image_dimensions": {

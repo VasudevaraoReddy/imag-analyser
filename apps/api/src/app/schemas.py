@@ -129,6 +129,9 @@ class AnalysisResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
     diagram_id: str
+    arc_number: str = ""
+    title: str = ""
+    description: str = ""
     submitted_at: str
     filename: str
     input_format: InputFormat
@@ -153,6 +156,8 @@ class AnalysisResult(BaseModel):
 
 class AnalysisSummary(BaseModel):
     diagram_id: str
+    arc_number: str = ""
+    title: str = ""
     submitted_at: str
     filename: str
     primary_provider: PrimaryProvider

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
 from ..config import get_settings
 from ..schemas import AnalysisResult, AnalysisSummary
 from ..services.analyzer import analyze_diagram
+from ..services.compliance import load_rules
 from ..services.normalize import load_taxonomy
 from ..storage import (
     list_summaries,
@@ -20,9 +21,15 @@ router = APIRouter()
 
 
 @router.post("/analyze", response_model=AnalysisResult)
-async def post_analyze(file: UploadFile = File(...)) -> AnalysisResult:
+async def post_analyze(
+    file: UploadFile = File(...),
+    title: str = Form(""),
+    description: str = Form(""),
+) -> AnalysisResult:
     if file.filename is None:
         raise HTTPException(status_code=400, detail="filename is required")
+    if not title.strip():
+        raise HTTPException(status_code=400, detail="title is required")
     data = await file.read()
     settings = get_settings()
     max_bytes = settings.max_upload_mb * 1024 * 1024
@@ -32,7 +39,9 @@ async def post_analyze(file: UploadFile = File(...)) -> AnalysisResult:
             detail=f"Upload exceeds {settings.max_upload_mb} MB",
         )
     try:
-        result = await analyze_diagram(data, file.filename)
+        result = await analyze_diagram(
+            data, file.filename, title=title, description=description,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=415, detail=str(exc)) from exc
     return result
@@ -73,3 +82,24 @@ def get_taxonomy(provider: str) -> JSONResponse:
     if provider not in allowed:
         raise HTTPException(status_code=404, detail="unknown taxonomy")
     return JSONResponse(load_taxonomy(provider))
+
+
+@router.get("/policies/compliance")
+def get_compliance_policies() -> JSONResponse:
+    """Return the active compliance rule set (id, title, severity, enabled).
+
+    Useful for ops/architects to see which controls are currently enforced
+    without having to read source code or the JSON file directly.
+    """
+    rules = [
+        {
+            "id": r.get("id"),
+            "title": r.get("title"),
+            "severity": r.get("severity"),
+            "fail_status": r.get("fail_status", "fail"),
+            "enabled": r.get("enabled", True),
+            "check": r.get("check"),
+        }
+        for r in load_rules()
+    ]
+    return JSONResponse({"rules": rules})

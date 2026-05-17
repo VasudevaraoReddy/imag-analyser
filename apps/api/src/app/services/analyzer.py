@@ -22,7 +22,7 @@ from ..schemas import (
     ReviewState,
     TrustZone,
 )
-from ..storage import save_analysis, save_processed, save_upload
+from ..storage import next_arc_number, save_analysis, save_processed, save_upload
 from . import classifier, compliance, doc_intelligence, image_prep, normalize, tiling
 from . import vision_llm
 
@@ -150,9 +150,16 @@ def _merge_pages(extractions: list[LLMExtraction]) -> LLMExtraction:
     return best.model_copy(update={"parsing_warnings": [*best.parsing_warnings, warn]})
 
 
-async def analyze_diagram(file_bytes: bytes, filename: str) -> AnalysisResult:
+async def analyze_diagram(
+    file_bytes: bytes,
+    filename: str,
+    *,
+    title: str = "",
+    description: str = "",
+) -> AnalysisResult:
     diagram_id = uuid.uuid4().hex
-    log.bind(diagram_id=diagram_id, filename=filename)
+    arc_number = next_arc_number()
+    log.bind(diagram_id=diagram_id, arc_number=arc_number, filename=filename)
     timings: dict[str, int] = {
         "image_prep": 0,
         "doc_intelligence": 0,
@@ -191,6 +198,11 @@ async def analyze_diagram(file_bytes: bytes, filename: str) -> AnalysisResult:
         ex=merged,
         tiles_processed=total_tiles,
     )
+    result = result.model_copy(update={
+        "arc_number": arc_number,
+        "title": title.strip(),
+        "description": description.strip(),
+    })
     result = normalize.canonicalize_components(result)
     result = normalize.infer_trust_zones_if_missing(result)
     result = normalize.derive_primary_provider(result)

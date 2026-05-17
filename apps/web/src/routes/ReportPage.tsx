@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import clsx from "clsx";
 import { ArrowLeft, Printer, Download, FileText } from "lucide-react";
+import { YES_BANK_BLUE, YES_BANK_RED, YES_BANK_LOGO } from "../lib/brand";
 import { getAnalysis, processedImageUrl } from "../lib/api";
 import { ProviderBadge } from "../components/ProviderBadge";
 import { ConfidenceBadge } from "../components/ConfidenceBadge";
@@ -114,7 +115,7 @@ export default function ReportPage() {
   return (
     <div className="bg-slate-100 min-h-screen">
       {/* Toolbar (hidden on print) */}
-      <div className="no-print bg-brand text-white">
+      <div className="no-print text-white" style={{ backgroundColor: YES_BANK_BLUE }}>
         <div className="max-w-4xl mx-auto px-8 py-3 flex items-center justify-between">
           <Link to={`/results/${d.diagram_id}`} className="inline-flex items-center gap-1 text-sm text-white/85 hover:text-white">
             <ArrowLeft className="w-4 h-4" /> Back to analysis
@@ -142,15 +143,32 @@ export default function ReportPage() {
       {/* Page sheet */}
       <div className="max-w-4xl mx-auto bg-white shadow-elev my-6 print:my-0 print:shadow-none">
         {/* Cover */}
-        <header className="bg-brand text-white px-10 py-10 print:py-8">
-          <div className="flex items-center gap-3 text-white/80 text-xs uppercase tracking-[0.2em]">
-            <FileText className="w-4 h-4" /> Architecture Security Review
+        <header className="text-white px-10 py-10 print:py-8 relative" style={{ backgroundColor: YES_BANK_BLUE }}>
+          <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: YES_BANK_RED }} />
+          <div className="flex items-center gap-3">
+            <div className="bg-white rounded-md p-1.5 shadow-sm">
+              <img src={YES_BANK_LOGO} alt="YES BANK" className="h-9 w-auto" />
+            </div>
+            <div className="border-l border-white/30 pl-3">
+              <div className="flex items-center gap-2 text-white/85 text-xs uppercase tracking-[0.2em]">
+                <FileText className="w-4 h-4" /> Architecture Security Review
+              </div>
+              <div className="text-[11px] text-white/65 mt-0.5">YES BANK · Internal use only</div>
+            </div>
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight mt-3">
-            {d.filename}
+          {d.arc_number && (
+            <div className="inline-block mt-5 px-2.5 py-1 rounded bg-white/15 text-white text-xs font-mono ring-1 ring-white/25">
+              {d.arc_number}
+            </div>
+          )}
+          <h1 className="text-3xl font-semibold tracking-tight mt-2">
+            {d.title || d.filename}
           </h1>
-          <div className="text-white/80 text-sm mt-1">
-            Report ID: <span className="font-mono">{d.diagram_id}</span>
+          {d.description && (
+            <p className="text-white/85 text-sm mt-2 max-w-2xl">{d.description}</p>
+          )}
+          <div className="text-white/80 text-sm mt-3">
+            Source file: <span className="font-mono">{d.filename}</span>
           </div>
           <div className="text-white/80 text-sm">
             Generated: {new Date(d.submitted_at).toLocaleString()}

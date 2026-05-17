@@ -73,7 +73,8 @@ export default function HistoryPage() {
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-slate-600 text-left text-xs uppercase tracking-wide">
               <tr>
-                <th className="px-4 py-2.5 font-medium">Filename</th>
+                <th className="px-4 py-2.5 font-medium">ARC #</th>
+                <th className="px-4 py-2.5 font-medium">Title / File</th>
                 <th className="px-4 py-2.5 font-medium">Submitted</th>
                 <th className="px-4 py-2.5 font-medium">Provider</th>
                 <th className="px-4 py-2.5 font-medium text-right">Components</th>
@@ -84,10 +85,16 @@ export default function HistoryPage() {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.diagram_id} className="border-t border-slate-100 hover:bg-brand-50/40">
+                  <td className="px-4 py-2.5 font-mono text-xs text-brand-700">
+                    {r.arc_number || "—"}
+                  </td>
                   <td className="px-4 py-2.5">
                     <Link to={`/results/${r.diagram_id}`} className="text-brand hover:underline font-medium">
-                      {r.filename}
+                      {r.title || r.filename}
                     </Link>
+                    {r.title && (
+                      <div className="text-xs text-slate-500">{r.filename}</div>
+                    )}
                   </td>
                   <td className="px-4 py-2.5 text-slate-600">
                     {new Date(r.submitted_at).toLocaleString()}

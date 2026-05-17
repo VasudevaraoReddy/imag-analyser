@@ -1,6 +1,9 @@
 {
   "diagram_id": "e55cb543970a45fdb59c6abfe85e288d",
   "submitted_at": "2026-05-16T09:27:15.891337+00:00",
+  "arc_number": "ARC-202605-002",
+  "title": "eBranch Demo VNet — Prod",
+  "description": "This is a description of the diagram.",
   "filename": "1_c93LwmAyXhJobl3S1Mnepw.png",
   "input_format": "png",
   "image_dimensions": {

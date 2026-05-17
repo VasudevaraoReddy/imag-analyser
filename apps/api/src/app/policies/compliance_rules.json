@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "description": "YES BANK cloud-architecture compliance rule set. Edit, add, or disable rules here — the evaluator in services/compliance.py picks them up automatically. Order is preserved in the report.",
+  "rules": [
+    {
+      "id": "WAF_BEFORE_APP",
+      "title": "WAF / edge guard precedes application tier",
+      "enabled": true,
+      "severity": "high",
+      "fail_status": "fail",
+      "check": "external_ingress_terminates_on",
+      "params": {
+        "allowed_service_types": [
+          "edge_waf", "cdn", "api_gateway", "load_balancer"
+        ]
+      },
+      "pass_message": "All external ingress passes through an edge guard (WAF / CDN / API gateway / load balancer).",
+      "fail_message": "External traffic terminates on a component that is not an edge guard (WAF / CDN / API gateway / load balancer)."
+    },
+    {
+      "id": "NO_PUBLIC_DATA_TIER",
+      "title": "Data tier is not exposed in public trust zones",
+      "enabled": true,
+      "severity": "critical",
+      "fail_status": "fail",
+      "check": "components_not_in_zones",
+      "params": {
+        "service_types": [
+          "database_relational", "database_nosql", "database_cache", "database_warehouse",
+          "storage_object", "storage_file", "storage_block",
+          "messaging_event_stream"
+        ],
+        "forbidden_zone_kinds": ["external", "perimeter", "dmz"]
+      },
+      "pass_message": "No data-tier components are exposed in a public trust zone.",
+      "fail_message": "Data-tier components are placed in a public trust zone (external / perimeter / DMZ)."
+    },
+    {
+      "id": "TLS_ON_EXTERNAL_EDGES",
+      "title": "TLS / mTLS on all external-facing edges",
+      "enabled": true,
+      "severity": "high",
+      "fail_status": "fail",
+      "unknown_status": "warn",
+      "unknown_severity": "medium",
+      "check": "edges_encrypted",
+      "params": {
+        "scope": "north_south",
+        "into_zone_kinds": ["perimeter", "dmz", "internal", "restricted", "management"]
+      },
+      "pass_message": "All external edges use encrypted protocols.",
+      "fail_message": "External edges use plaintext protocols (HTTP/FTP/Telnet/AMQP/MQTT).",
+      "unknown_message": "Encryption could not be confirmed on one or more external edges."
+    },
+    {
+      "id": "ENCRYPTION_TO_RESTRICTED",
+      "title": "Encryption on traffic entering restricted zones",
+      "enabled": true,
+      "severity": "high",
+      "fail_status": "fail",
+      "unknown_status": "warn",
+      "unknown_severity": "medium",
+      "check": "edges_encrypted",
+      "params": {
+        "scope": "all_data_flows",
+        "into_zone_kinds": ["restricted"]
+      },
+      "pass_message": "All edges into restricted zones are encrypted.",
+      "fail_message": "Edges to restricted zones use plaintext protocols.",
+      "unknown_message": "Encryption could not be confirmed on edges entering a restricted zone."
+    },
+    {
+      "id": "PRIVATE_ENDPOINTS_FOR_PAAS",
+      "title": "Private endpoints for managed data services",
+      "enabled": true,
+      "severity": "medium",
+      "fail_status": "warn",
+      "check": "private_endpoint_peering",
+      "params": {
+        "provider": "azure",
+        "service_types": [
+          "database_relational", "database_nosql", "database_cache", "database_warehouse",
+          "storage_object", "storage_file", "secrets_vault"
+        ],
+        "peer_service_type": "networking_private_endpoint"
+      },
+      "pass_message": "Azure PaaS components are paired with a private endpoint.",
+      "fail_message": "Azure PaaS components lack a Private Endpoint in their trust zone.",
+      "not_applicable_message": "No Azure PaaS components detected."
+    },
+    {
+      "id": "IDENTITY_PRESENT",
+      "title": "Identity provider on external flows",
+      "enabled": true,
+      "severity": "medium",
+      "fail_status": "warn",
+      "check": "at_least_one_component_of_type",
+      "params": {
+        "required_service_types": ["identity"],
+        "applies_when": "any_external_ns_flow"
+      },
+      "pass_message": "Identity provider is present.",
+      "fail_message": "External flows exist but no identity provider is shown.",
+      "not_applicable_message": "No external north-south flows detected."
+    },
+    {
+      "id": "LOGGING_PRESENT",
+      "title": "Logging / monitoring / SIEM is present",
+      "enabled": true,
+      "severity": "low",
+      "fail_status": "warn",
+      "check": "at_least_one_component_of_type",
+      "params": {
+        "required_service_types": ["logging", "monitoring", "siem"]
+      },
+      "pass_message": "Logging/monitoring/SIEM component is present.",
+      "fail_message": "No logging, monitoring, or SIEM component shown on the diagram."
+    },
+    {
+      "id": "SECRETS_VAULT_PRESENT",
+      "title": "Secrets vault for databases / SaaS connections",
+      "enabled": true,
+      "severity": "low",
+      "fail_status": "warn",
+      "check": "at_least_one_component_of_type",
+      "params": {
+        "required_service_types": ["secrets_vault"],
+        "applies_when": "any_database_or_saas"
+      },
+      "pass_message": "Secrets vault is present.",
+      "fail_message": "Databases or third-party SaaS present, but no secrets vault is shown.",
+      "not_applicable_message": "No databases or third-party SaaS components detected."
+    }
+  ]
+}

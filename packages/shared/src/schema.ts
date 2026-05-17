@@ -225,6 +225,9 @@ export type ImageDimensions = z.infer<typeof ImageDimensions>;
 
 export const AnalysisResult = z.object({
   diagram_id: z.string(),
+  arc_number: z.string().default(""),
+  title: z.string().default(""),
+  description: z.string().default(""),
   submitted_at: z.string(),
   filename: z.string(),
   input_format: InputFormat,
@@ -247,6 +250,8 @@ export type AnalysisResult = z.infer<typeof AnalysisResult>;
 
 export const AnalysisSummary = z.object({
   diagram_id: z.string(),
+  arc_number: z.string().default(""),
+  title: z.string().default(""),
   submitted_at: z.string(),
   filename: z.string(),
   primary_provider: PrimaryProvider,

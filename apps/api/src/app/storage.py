@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
 
@@ -41,6 +43,8 @@ def list_summaries() -> list[AnalysisSummary]:
         out.append(
             AnalysisSummary(
                 diagram_id=a.diagram_id,
+                arc_number=getattr(a, "arc_number", "") or "",
+                title=getattr(a, "title", "") or "",
                 submitted_at=a.submitted_at,
                 filename=a.filename,
                 primary_provider=a.primary_provider,
@@ -51,6 +55,43 @@ def list_summaries() -> list[AnalysisSummary]:
         )
     out.sort(key=lambda s: s.submitted_at, reverse=True)
     return out
+
+
+_ARC_RE = re.compile(r"^ARC-(\d{6})-(\d{3,})$")
+
+
+def next_arc_number(now: datetime | None = None) -> str:
+    """Generate the next sequential ARC number for the current year-month.
+
+    Format: ``ARC-YYYYMM-NNN`` (zero-padded to at least 3 digits, grows
+    naturally if more than 999 reviews land in one month).
+
+    Looks at every existing analysis JSON on disk, finds the highest
+    sequence number that matches the current YYYYMM, and returns the next.
+    Safe across restarts because the source of truth is the filesystem.
+    """
+    now = now or datetime.now(timezone.utc)
+    yyyymm = f"{now.year:04d}{now.month:02d}"
+    max_seq = 0
+    for p in get_settings().analyses_dir.glob("*.json"):
+        try:
+            raw = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        arc = str(raw.get("arc_number") or "")
+        m = _ARC_RE.match(arc)
+        if not m:
+            continue
+        if m.group(1) != yyyymm:
+            continue
+        try:
+            seq = int(m.group(2))
+        except ValueError:
+            continue
+        if seq > max_seq:
+            max_seq = seq
+    next_seq = max_seq + 1
+    return f"ARC-{yyyymm}-{next_seq:03d}"
 
 
 def save_upload(diagram_id: str, suffix: str, data: bytes) -> Path:

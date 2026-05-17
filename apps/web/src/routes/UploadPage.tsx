@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, Rocket } from "lucide-react";
 import { DiagramUploader } from "../components/DiagramUploader";
 import { uploadDiagram } from "../lib/api";
 
@@ -15,18 +15,23 @@ const STAGES = [
 
 export default function UploadPage() {
   const navigate = useNavigate();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [filename, setFilename] = useState<string>("");
   const [stage, setStage] = useState<number>(-1);
 
   const mutation = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async (payload: { file: File; title: string; description: string }) => {
       setStage(0);
       const interval = setInterval(() => {
         setStage((s) => (s < STAGES.length - 1 ? s + 1 : s));
       }, 700);
       try {
-        return await uploadDiagram(file);
+        return await uploadDiagram(payload.file, {
+          title: payload.title,
+          description: payload.description,
+        });
       } finally {
         clearInterval(interval);
       }
@@ -34,40 +39,84 @@ export default function UploadPage() {
     onSuccess: (result) => navigate(`/results/${result.diagram_id}`),
   });
 
-  const handleFile = (file: File) => {
-    setFilename(file.name);
-    setPreviewUrl(URL.createObjectURL(file));
-    mutation.mutate(file);
+  const handleFile = (f: File) => {
+    setFile(f);
+    setPreviewUrl(URL.createObjectURL(f));
+  };
+
+  const canSubmit = title.trim().length > 0 && file !== null && !mutation.isPending;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit || !file) return;
+    mutation.mutate({ file, title: title.trim(), description: description.trim() });
   };
 
   return (
     <div className="max-w-3xl mx-auto p-8 space-y-6">
-      <div>
-        <div className="text-xs uppercase tracking-wider text-brand font-semibold">
-          New analysis
+      
+      <form onSubmit={handleSubmit} className="card p-5 space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-slate-800">
+            Title <span className="text-rose-500">*</span>
+          </label>
+          <input
+            type="text"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. eBranch Demo VNet — Prod"
+            className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+            disabled={mutation.isPending}
+          />
+          <p className="text-xs text-slate-500 mt-1">
+            A short, recognizable name. Required.
+          </p>
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight mt-1">
-          Analyze an architecture diagram
-        </h1>
-        <p className="text-slate-600 text-sm mt-1">
-          Drop a cloud architecture diagram. The analyzer will extract components,
-          classify north-south and east-west flows, and run compliance checks
-          against the bank's reference controls.
-        </p>
-      </div>
 
-      <DiagramUploader onFile={handleFile} disabled={mutation.isPending} />
+        <div>
+          <label className="block text-sm font-medium text-slate-800">
+            Description <span className="text-slate-400 font-normal">(optional)</span>
+          </label>
+          <textarea
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Purpose of the review, scope, stakeholders, change context, …"
+            className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+            disabled={mutation.isPending}
+          />
+        </div>
 
-      {previewUrl && (
-        <div className="card p-4">
-          <div className="text-xs text-slate-500 mb-2">{filename}</div>
-          {/\.pdf$|\.drawio$/i.test(filename) ? (
-            <div className="text-sm text-slate-500">No inline preview for this format.</div>
-          ) : (
-            <img src={previewUrl} alt={filename} className="max-h-64 mx-auto rounded" />
+        <div>
+          <label className="block text-sm font-medium text-slate-800 mb-2">
+            Architecture diagram <span className="text-rose-500">*</span>
+          </label>
+          <DiagramUploader onFile={handleFile} disabled={mutation.isPending} />
+          {previewUrl && file && (
+            <div className="mt-3 border border-slate-200 rounded-md p-3 bg-slate-50">
+              <div className="text-xs text-slate-500 mb-2">{file.name}</div>
+              {/\.pdf$|\.drawio$/i.test(file.name) ? (
+                <div className="text-sm text-slate-500">No inline preview for this format.</div>
+              ) : (
+                <img src={previewUrl} alt={file.name} className="max-h-48 mx-auto rounded" />
+              )}
+            </div>
           )}
         </div>
-      )}
+         
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {mutation.isPending ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Running…</>
+            ) : (
+              <><Rocket className="w-4 h-4" /> Start Architecture Review</>
+            )}
+          </button>
+      </form>
 
       {mutation.isPending && (
         <div className="card p-5">

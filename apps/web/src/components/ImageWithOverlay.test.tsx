@@ -24,6 +24,9 @@ describe("AnalysisResult fixture parses", () => {
   it("loads a minimal fixture", () => {
     const fix: AnalysisResult = {
       diagram_id: "x",
+      arc_number: "ARC-202605-001",
+      title: "Test",
+      description: "",
       submitted_at: "2026-05-16T00:00:00Z",
       filename: "f.png",
       input_format: "png",

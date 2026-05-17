@@ -1,60 +1,113 @@
-import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
-import { LayoutDashboard, Upload, FileText } from "lucide-react";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { LogOut, UserRound } from "lucide-react";
 import UploadPage from "./routes/UploadPage";
 import ResultsPage from "./routes/ResultsPage";
 import HistoryPage from "./routes/HistoryPage";
 import ReportPage from "./routes/ReportPage";
+import ChatPage from "./routes/ChatPage";
+import LoginPage from "./routes/LoginPage";
+import { Sidebar } from "./components/Sidebar";
+import { clearAuth, useAuth } from "./lib/auth";
+import { YES_BANK_BLUE, YES_BANK_RED, YES_BANK_LOGO } from "./lib/brand";
 
-function Nav() {
-  const linkBase =
-    "flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition";
-  const linkActive = "bg-white/15 text-white font-medium";
-  const linkIdle = "text-white/80 hover:text-white hover:bg-white/10";
+function RequireAuth({ children }: { children: JSX.Element }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+  }
+  return children;
+}
+
+function UserMenu() {
+  const { user } = useAuth();
+  if (!user) return null;
   return (
-    <nav className="flex items-center gap-1">
-      <NavLink to="/" end className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkIdle}`}>
-        <Upload className="w-4 h-4" /> Upload
-      </NavLink>
-      <NavLink to="/history" className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkIdle}`}>
-        <LayoutDashboard className="w-4 h-4" /> History
-      </NavLink>
-    </nav>
+    <div className="flex items-center gap-3 text-sm">
+      <div className="hidden sm:flex items-center gap-2 text-white/90">
+        <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
+          <UserRound className="w-4 h-4" />
+        </div>
+        <span className="font-medium">{user.employee_id}</span>
+      </div>
+      <button
+        onClick={() => clearAuth()}
+        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-white/85 hover:bg-white/10 hover:text-white transition"
+        title="Sign out"
+      >
+        <LogOut className="w-4 h-4" /> Sign out
+      </button>
+    </div>
   );
 }
 
 export default function App() {
   const location = useLocation();
+
+  // Login is its own full-bleed page
+  if (location.pathname === "/login") {
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+      </Routes>
+    );
+  }
+
   const isReport = location.pathname.endsWith("/report");
+
+  if (isReport) {
+    return (
+      <Routes>
+        <Route
+          path="/results/:id/report"
+          element={
+            <RequireAuth>
+              <ReportPage />
+            </RequireAuth>
+          }
+        />
+      </Routes>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      {!isReport && (
-        <header className="bg-brand text-white shadow-elev no-print">
-          <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-white/15 flex items-center justify-center">
-                <FileText className="w-4 h-4 text-white" />
+    <RequireAuth>
+      <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+        <header
+          className="text-white shadow-elev no-print relative shrink-0"
+          style={{ backgroundColor: YES_BANK_BLUE }}
+        >
+          <div className="h-1 w-full" style={{ backgroundColor: YES_BANK_RED }} />
+          <div className="px-6 h-16 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-3">
+              <div className="bg-white rounded-md p-1 flex items-center justify-center shadow-sm">
+                <img src={YES_BANK_LOGO} alt="YES BANK" className="h-8 w-auto" />
               </div>
-              <div className="leading-tight">
+              <div className="leading-tight border-l border-white/25 pl-3">
                 <div className="text-base font-semibold tracking-tight">
                   Architecture Diagram Analyzer
                 </div>
-                <div className="text-[11px] text-white/70 uppercase tracking-wider">
+                <div className="text-[11px] text-white/80 uppercase tracking-[0.15em]">
                   Internal · Cloud Security Review
                 </div>
               </div>
             </Link>
-            <Nav />
+            <UserMenu />
           </div>
         </header>
-      )}
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<UploadPage />} />
-          <Route path="/results/:id" element={<ResultsPage />} />
-          <Route path="/results/:id/report" element={<ReportPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-        </Routes>
-      </main>
-    </div>
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+          <Sidebar />
+          <main className="flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden">
+            <Routes>
+              <Route path="/" element={<UploadPage />} />
+              <Route path="/reviews" element={<HistoryPage />} />
+              <Route path="/results/:id" element={<ResultsPage />} />
+              <Route path="/chat" element={<ChatPage />} />
+              <Route path="/history" element={<HistoryPage />} />
+            </Routes>
+          </main>
+        </div>
+      </div>
+    </RequireAuth>
   );
 }
