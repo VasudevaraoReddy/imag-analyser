@@ -125,6 +125,13 @@ class ImageDimensions(BaseModel):
     height: int
 
 
+class Submitter(BaseModel):
+    employee_id: str = ""
+    name: str = ""
+    role: str = ""
+    email: str = ""
+
+
 class AnalysisResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
@@ -132,6 +139,7 @@ class AnalysisResult(BaseModel):
     arc_number: str = ""
     title: str = ""
     description: str = ""
+    submitted_by: Submitter | None = None
     submitted_at: str
     filename: str
     input_format: InputFormat
@@ -158,6 +166,8 @@ class AnalysisSummary(BaseModel):
     diagram_id: str
     arc_number: str = ""
     title: str = ""
+    submitted_by_employee_id: str = ""
+    submitted_by_name: str = ""
     submitted_at: str
     filename: str
     primary_provider: PrimaryProvider

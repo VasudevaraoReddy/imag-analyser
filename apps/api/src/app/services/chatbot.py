@@ -7,8 +7,9 @@ reads the stored AnalysisResult JSON.
 
 from __future__ import annotations
 
+import asyncio
 import json
-from typing import Any
+from typing import Any, AsyncIterator
 
 import structlog
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
@@ -222,12 +223,11 @@ class AzureOpenAIChatClient:
         )
         return resp.choices[0].message.content or ""
 
-    async def chat(
+    def _build_messages(
         self,
         messages: list[dict[str, Any]],
         analysis: AnalysisResult | None,
-    ) -> str:
-        import asyncio
+    ) -> list[dict[str, Any]]:
         system = CHAT_SYSTEM
         if analysis is not None:
             system += (
@@ -236,8 +236,61 @@ class AzureOpenAIChatClient:
                 "diagram or its findings.\n\n"
                 + _analysis_context_text(analysis)
             )
-        full = [{"role": "system", "content": system}, *messages]
+        return [{"role": "system", "content": system}, *messages]
+
+    async def chat(
+        self,
+        messages: list[dict[str, Any]],
+        analysis: AnalysisResult | None,
+    ) -> str:
+        full = self._build_messages(messages, analysis)
         return await asyncio.to_thread(self._call, full)
+
+    async def astream(
+        self,
+        messages: list[dict[str, Any]],
+        analysis: AnalysisResult | None,
+    ) -> AsyncIterator[str]:
+        """Yield response deltas as the model produces them."""
+        full = self._build_messages(messages, analysis)
+        # The SDK's stream is sync; pump it through a queue read from the
+        # event loop so we don't block the async runtime.
+        loop = asyncio.get_running_loop()
+        queue: asyncio.Queue[str | None] = asyncio.Queue()
+
+        def _pump() -> None:
+            try:
+                stream = self._client.chat.completions.create(
+                    model=self._deployment,
+                    messages=full,  # type: ignore[arg-type]
+                    temperature=self._settings.llm_temperature,
+                    top_p=self._settings.llm_top_p,
+                    seed=self._settings.llm_seed,
+                    max_tokens=1024,
+                    stream=True,
+                    timeout=60,
+                )
+                for chunk in stream:
+                    if not chunk.choices:
+                        continue
+                    delta = getattr(chunk.choices[0].delta, "content", None)
+                    if delta:
+                        loop.call_soon_threadsafe(queue.put_nowait, delta)
+            except Exception as exc:  # noqa: BLE001
+                loop.call_soon_threadsafe(
+                    queue.put_nowait,
+                    f"\n[stream error: {exc}]",
+                )
+            finally:
+                loop.call_soon_threadsafe(queue.put_nowait, None)
+
+        asyncio.get_running_loop().run_in_executor(None, _pump)
+
+        while True:
+            item = await queue.get()
+            if item is None:
+                break
+            yield item
 
 
 class MockChatClient:
@@ -246,12 +299,43 @@ class MockChatClient:
         messages: list[dict[str, Any]],
         analysis: AnalysisResult | None,
     ) -> str:
-        latest = ""
-        for m in reversed(messages):
-            if m.get("role") == "user":
-                latest = str(m.get("content", ""))
-                break
+        latest = _latest_user(messages)
         return _local_answer(latest, analysis)
+
+    async def astream(
+        self,
+        messages: list[dict[str, Any]],
+        analysis: AnalysisResult | None,
+    ) -> AsyncIterator[str]:
+        """Stream the deterministic answer word-by-word for a realistic
+        typing feel even without Azure credentials."""
+        latest = _latest_user(messages)
+        text = _local_answer(latest, analysis)
+        for token in _word_tokens(text):
+            yield token
+            await asyncio.sleep(0.025)
+
+
+def _latest_user(messages: list[dict[str, Any]]) -> str:
+    for m in reversed(messages):
+        if m.get("role") == "user":
+            return str(m.get("content", ""))
+    return ""
+
+
+def _word_tokens(text: str) -> list[str]:
+    """Split on whitespace but keep the whitespace so the reassembled
+    text matches the original exactly."""
+    out: list[str] = []
+    buf = ""
+    for ch in text:
+        buf += ch
+        if ch in (" ", "\n"):
+            out.append(buf)
+            buf = ""
+    if buf:
+        out.append(buf)
+    return out
 
 
 def get_client() -> AzureOpenAIChatClient | MockChatClient:
@@ -277,3 +361,18 @@ async def answer(
             log.warning("chat_analysis_not_found", analysis_id=analysis_id)
     client = get_client()
     return await client.chat(messages, analysis)
+
+
+async def stream_answer(
+    messages: list[dict[str, Any]],
+    analysis_id: str | None,
+) -> AsyncIterator[str]:
+    """Streaming sibling of :func:`answer`. Yields response deltas."""
+    analysis: AnalysisResult | None = None
+    if analysis_id:
+        analysis = load_analysis(analysis_id)
+        if analysis is None:
+            log.warning("chat_analysis_not_found", analysis_id=analysis_id)
+    client = get_client()
+    async for delta in client.astream(messages, analysis):
+        yield delta

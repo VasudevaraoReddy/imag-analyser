@@ -75,6 +75,7 @@ export default function HistoryPage() {
               <tr>
                 <th className="px-4 py-2.5 font-medium">ARC #</th>
                 <th className="px-4 py-2.5 font-medium">Title / File</th>
+                <th className="px-4 py-2.5 font-medium">Submitted by</th>
                 <th className="px-4 py-2.5 font-medium">Submitted</th>
                 <th className="px-4 py-2.5 font-medium">Provider</th>
                 <th className="px-4 py-2.5 font-medium text-right">Components</th>
@@ -94,6 +95,20 @@ export default function HistoryPage() {
                     </Link>
                     {r.title && (
                       <div className="text-xs text-slate-500">{r.filename}</div>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {r.submitted_by_name || r.submitted_by_employee_id ? (
+                      <div className="leading-tight">
+                        <div className="text-slate-800">{r.submitted_by_name || r.submitted_by_employee_id}</div>
+                        {r.submitted_by_name && r.submitted_by_employee_id && (
+                          <div className="text-[11px] text-slate-500 font-mono">
+                            {r.submitted_by_employee_id}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400">—</span>
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-slate-600">

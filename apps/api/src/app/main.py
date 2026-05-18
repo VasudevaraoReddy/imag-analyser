@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .config import get_settings
-from .routers import analyze, chat, health
+from .routers import analyze, auth, chat, health
 
 
 def _configure_logging() -> None:
@@ -86,6 +86,7 @@ def create_app() -> FastAPI:
         return await call_next(request)
 
     app.include_router(health.router, prefix="/api")
+    app.include_router(auth.router, prefix="/api")
     app.include_router(analyze.router, prefix="/api")
     app.include_router(chat.router, prefix="/api")
 

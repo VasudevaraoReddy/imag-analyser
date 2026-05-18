@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2, Loader2, Rocket } from "lucide-react";
+import { CheckCircle2, Loader2, Rocket, UserRound } from "lucide-react";
 import { DiagramUploader } from "../components/DiagramUploader";
 import { uploadDiagram } from "../lib/api";
+import { useAuth } from "../lib/auth";
 
 const STAGES = [
   "Uploading file",
@@ -15,6 +16,7 @@ const STAGES = [
 
 export default function UploadPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -31,6 +33,10 @@ export default function UploadPage() {
         return await uploadDiagram(payload.file, {
           title: payload.title,
           description: payload.description,
+          submitted_by_employee_id: user?.employee_id ?? "",
+          submitted_by_name: user?.name ?? "",
+          submitted_by_role: user?.role ?? "",
+          submitted_by_email: user?.email ?? "",
         });
       } finally {
         clearInterval(interval);
@@ -56,6 +62,24 @@ export default function UploadPage() {
     <div className="max-w-3xl mx-auto p-8 space-y-6">
       
       <form onSubmit={handleSubmit} className="card p-5 space-y-5">
+        {user && (
+          <div className="flex items-center gap-2.5 bg-brand-50 ring-1 ring-brand-100 rounded-md px-3 py-2 text-sm">
+            <div className="w-7 h-7 rounded-full bg-white ring-1 ring-brand-200 flex items-center justify-center">
+              <UserRound className="w-4 h-4 text-brand" />
+            </div>
+            <div className="leading-tight">
+              <div className="text-[10px] uppercase tracking-wider text-brand-700 font-semibold">
+                Submitted by
+              </div>
+              <div className="text-slate-800">
+                <span className="font-medium">{user.name || user.employee_id}</span>
+                <span className="text-slate-500 text-xs ml-2">
+                  {user.employee_id}{user.role ? ` · ${user.role}` : ""}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-slate-800">
             Title <span className="text-rose-500">*</span>

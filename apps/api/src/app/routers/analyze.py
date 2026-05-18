@@ -25,6 +25,10 @@ async def post_analyze(
     file: UploadFile = File(...),
     title: str = Form(""),
     description: str = Form(""),
+    submitted_by_employee_id: str = Form(""),
+    submitted_by_name: str = Form(""),
+    submitted_by_role: str = Form(""),
+    submitted_by_email: str = Form(""),
 ) -> AnalysisResult:
     if file.filename is None:
         raise HTTPException(status_code=400, detail="filename is required")
@@ -40,7 +44,16 @@ async def post_analyze(
         )
     try:
         result = await analyze_diagram(
-            data, file.filename, title=title, description=description,
+            data,
+            file.filename,
+            title=title,
+            description=description,
+            submitted_by={
+                "employee_id": submitted_by_employee_id.strip(),
+                "name": submitted_by_name.strip(),
+                "role": submitted_by_role.strip(),
+                "email": submitted_by_email.strip(),
+            },
         )
     except ValueError as exc:
         raise HTTPException(status_code=415, detail=str(exc)) from exc

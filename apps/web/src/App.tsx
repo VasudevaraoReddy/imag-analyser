@@ -28,7 +28,12 @@ function UserMenu() {
         <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
           <UserRound className="w-4 h-4" />
         </div>
-        <span className="font-medium">{user.employee_id}</span>
+        <div className="leading-tight">
+          <div className="font-medium">{user.name || user.employee_id}</div>
+          <div className="text-[10px] uppercase tracking-wider text-white/70">
+            {user.employee_id}{user.role ? ` · ${user.role}` : ""}
+          </div>
+        </div>
       </div>
       <button
         onClick={() => clearAuth()}

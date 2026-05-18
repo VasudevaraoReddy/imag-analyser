@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Loader2, LogIn, ShieldCheck } from "lucide-react";
 import { saveAuth } from "../lib/auth";
+import { login } from "../lib/api";
 import { YES_BANK_BLUE, YES_BANK_RED, YES_BANK_LOGO } from "../lib/brand";
 
 export default function LoginPage() {
@@ -23,14 +24,29 @@ export default function LoginPage() {
       return;
     }
     setSubmitting(true);
-    // MVP: no real auth — accept any non-empty credentials.
-    // TODO: replace with Entra ID / OAuth call.
-    await new Promise((r) => setTimeout(r, 400));
-    saveAuth({
-      employee_id: employeeId.trim().toUpperCase(),
-      signed_in_at: new Date().toISOString(),
-    });
-    navigate(from, { replace: true });
+    try {
+      const user = await login(employeeId.trim(), password);
+      saveAuth({
+        employee_id: user.employee_id,
+        name: user.name,
+        role: user.role,
+        email: user.email,
+        token: user.token,
+        signed_in_at: new Date().toISOString(),
+      });
+      navigate(from, { replace: true });
+    } catch (err) {
+      const msg = (err as Error).message || "Sign-in failed.";
+      // Strip the "API 401:" prefix from jsonFetch so users see a clean message
+      const clean = msg.replace(/^API \d+:\s*/, "").replace(/[{}"]/g, "").trim();
+      setError(
+        /invalid|401/i.test(msg)
+          ? "Invalid employee ID or password."
+          : clean || "Sign-in failed.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -38,7 +54,7 @@ export default function LoginPage() {
       {/* Left brand panel */}
       <aside
         className="hidden md:flex flex-1 flex-col justify-between text-white relative"
-        style={{ backgroundColor: YES_BANK_BLUE }}
+        style={{ backgroundColor: '#00518F' }}
       >
         <div className="h-1 w-full" style={{ backgroundColor: YES_BANK_RED }} />
         <div className="absolute inset-0 opacity-[0.08] pointer-events-none">

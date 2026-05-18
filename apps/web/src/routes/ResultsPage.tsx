@@ -106,6 +106,17 @@ export default function ResultsPage() {
             )}
             <div className="text-xs text-slate-500 mt-1">
               {data.filename} · {new Date(data.submitted_at).toLocaleString()}
+              {data.submitted_by?.name || data.submitted_by?.employee_id ? (
+                <>
+                  {" · "}Submitted by{" "}
+                  <span className="text-slate-700 font-medium">
+                    {data.submitted_by.name || data.submitted_by.employee_id}
+                  </span>
+                  {data.submitted_by.name && data.submitted_by.employee_id && (
+                    <span className="ml-1 font-mono">({data.submitted_by.employee_id})</span>
+                  )}
+                </>
+              ) : null}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">

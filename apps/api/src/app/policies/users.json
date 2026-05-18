@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "users": [
+    {
+      "employee_id": "VRC2106734",
+      "password": "yesbank@123",
+      "name": "Vasu Reddy",
+      "role": "Security Architect",
+      "email": "vasu.reddy@yesbank.in"
+    }
+  ]
+}

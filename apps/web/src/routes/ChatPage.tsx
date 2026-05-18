@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import clsx from "clsx";
-import { Bot, Loader2, Send, Sparkles, User } from "lucide-react";
-import { listAnalyses, sendChat, type ChatMessage } from "../lib/api";
+import { Bot, Loader2, Send, Sparkles, Square, User } from "lucide-react";
+import { listAnalyses, streamChat, type ChatMessage } from "../lib/api";
 
 const STARTERS = [
   "Give me a summary of this analysis.",
@@ -21,8 +21,10 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const { data: analyses } = useQuery({
     queryKey: ["history"],
@@ -49,18 +51,57 @@ export default function ChatPage() {
     const text = (textOverride ?? input).trim();
     if (!text || sending) return;
     setError(null);
-    const next: ChatMessage[] = [...messages, { role: "user", content: text }];
-    setMessages(next);
+    const userMessage: ChatMessage = { role: "user", content: text };
+    const placeholder: ChatMessage = { role: "assistant", content: "" };
+    const withUser = [...messages, userMessage];
+    setMessages([...withUser, placeholder]);
     setInput("");
     setSending(true);
+    setStreaming(true);
+
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+
     try {
-      const res = await sendChat(next, analysisId);
-      setMessages([...next, { role: "assistant", content: res.reply }]);
+      await streamChat(
+        withUser,
+        analysisId,
+        (delta) => {
+          setMessages((prev) => {
+            const out = prev.slice();
+            const last = out[out.length - 1];
+            if (last && last.role === "assistant") {
+              out[out.length - 1] = { ...last, content: last.content + delta };
+            }
+            return out;
+          });
+        },
+        ctrl.signal,
+      );
     } catch (e) {
-      setError((e as Error).message);
+      const msg = (e as Error).message || "Stream failed";
+      if ((e as Error).name === "AbortError") {
+        // user-cancelled — keep partial content
+      } else {
+        setError(msg);
+        // Drop the empty placeholder if nothing came back
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last && last.role === "assistant" && last.content === "") {
+            return prev.slice(0, -1);
+          }
+          return prev;
+        });
+      }
     } finally {
       setSending(false);
+      setStreaming(false);
+      abortRef.current = null;
     }
+  };
+
+  const handleStop = () => {
+    abortRef.current?.abort();
   };
 
   return (
@@ -109,7 +150,7 @@ export default function ChatPage() {
               <button
                 key={s}
                 onClick={() => handleSend(s)}
-                disabled={sending}
+                disabled={sending || streaming}
                 className="w-full text-left text-xs px-2 py-1.5 rounded-md border border-slate-200 hover:bg-brand-50 hover:border-brand-200 transition disabled:opacity-50"
               >
                 <Sparkles className="inline w-3 h-3 mr-1 text-brand" /> {s}
@@ -144,10 +185,17 @@ export default function ChatPage() {
               </div>
             </div>
           )}
-          {messages.map((m, i) => (
-            <Message key={i} message={m} />
-          ))}
-          {sending && (
+          {messages.map((m, i) => {
+            const isLast = i === messages.length - 1;
+            return (
+              <Message
+                key={i}
+                message={m}
+                streaming={isLast && streaming && m.role === "assistant"}
+              />
+            );
+          })}
+          {sending && messages[messages.length - 1]?.content === "" && (
             <div className="flex items-center gap-2 text-slate-500 text-sm">
               <Loader2 className="w-4 h-4 animate-spin text-brand" /> Thinking…
             </div>
@@ -174,13 +222,23 @@ export default function ChatPage() {
               placeholder="Ask about components, flows, compliance… (Enter to send)"
               className="flex-1 resize-none rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand min-h-[40px] max-h-32"
             />
-            <button
-              onClick={() => handleSend()}
-              disabled={sending || !input.trim()}
-              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send className="w-4 h-4" /> Send
-            </button>
+            {streaming ? (
+              <button
+                onClick={handleStop}
+                className="btn-secondary"
+                title="Stop streaming"
+              >
+                <Square className="w-4 h-4" /> Stop
+              </button>
+            ) : (
+              <button
+                onClick={() => handleSend()}
+                disabled={sending || !input.trim()}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send className="w-4 h-4" /> Send
+              </button>
+            )}
           </div>
         </footer>
       </section>
@@ -188,7 +246,13 @@ export default function ChatPage() {
   );
 }
 
-function Message({ message }: { message: ChatMessage }) {
+function Message({
+  message,
+  streaming = false,
+}: {
+  message: ChatMessage;
+  streaming?: boolean;
+}) {
   const isUser = message.role === "user";
   return (
     <div className={clsx("flex gap-3", isUser ? "justify-end" : "justify-start")}>
@@ -206,6 +270,12 @@ function Message({ message }: { message: ChatMessage }) {
         )}
       >
         {message.content}
+        {streaming && (
+          <span
+            className="inline-block w-[2px] h-4 align-text-bottom ml-0.5 bg-current animate-pulse"
+            aria-hidden
+          />
+        )}
       </div>
       {isUser && (
         <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">

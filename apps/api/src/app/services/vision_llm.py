@@ -714,12 +714,17 @@ class AzureOpenAIVisionClient:
         retry=retry_if_exception_type(Exception),
     )
     def _call(self, messages: list[dict[str, Any]]) -> str:
+        # Determinism knobs: temperature=0, top_p=1, fixed seed.
+        # Azure OpenAI doesn't *guarantee* bit-identical outputs even at
+        # temp=0, but this combination minimizes run-to-run drift, which
+        # is exactly what we want for diagram extraction.
         resp = self._client.chat.completions.create(
             model=self._deployment,
             messages=messages,  # type: ignore[arg-type]
             response_format={"type": "json_object"},
             temperature=self._settings.llm_temperature,
-            top_p=0.9,
+            top_p=self._settings.llm_top_p,
+            seed=self._settings.llm_seed,
             max_tokens=self._settings.llm_max_tokens,
             timeout=60,
         )

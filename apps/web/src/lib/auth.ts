@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 
-// MVP-only client-side auth. Replace with Entra ID / OAuth before
-// exposing to non-localhost traffic. See README.
+// MVP client-side auth state. The actual credential check happens on the
+// backend (POST /api/auth/login). The shape below is what we cache locally
+// for header display and to gate routes.
+// TODO: replace with Entra ID / OAuth before non-localhost deployment.
 const AUTH_KEY = "bank-arch.auth.user";
 
 export type AuthUser = {
   employee_id: string;
+  name: string;
+  role: string;
+  email: string;
+  token: string;
   signed_in_at: string; // ISO
 };
 

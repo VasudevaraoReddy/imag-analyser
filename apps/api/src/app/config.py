@@ -30,7 +30,9 @@ class Settings(BaseSettings):
     tile_size_px: int = Field(default=2048)
     tile_overlap_px: int = Field(default=256)
 
-    llm_temperature: float = Field(default=0.1)
+    llm_temperature: float = Field(default=0.0)
+    llm_top_p: float = Field(default=1.0)
+    llm_seed: int = Field(default=42)
     llm_max_tokens: int = Field(default=4096)
 
     @property

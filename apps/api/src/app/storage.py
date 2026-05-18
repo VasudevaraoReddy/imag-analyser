@@ -40,11 +40,14 @@ def iter_analyses() -> Iterator[AnalysisResult]:
 def list_summaries() -> list[AnalysisSummary]:
     out: list[AnalysisSummary] = []
     for a in iter_analyses():
+        submitter = getattr(a, "submitted_by", None)
         out.append(
             AnalysisSummary(
                 diagram_id=a.diagram_id,
                 arc_number=getattr(a, "arc_number", "") or "",
                 title=getattr(a, "title", "") or "",
+                submitted_by_employee_id=(submitter.employee_id if submitter else ""),
+                submitted_by_name=(submitter.name if submitter else ""),
                 submitted_at=a.submitted_at,
                 filename=a.filename,
                 primary_provider=a.primary_provider,

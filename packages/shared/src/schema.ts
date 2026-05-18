@@ -223,11 +223,20 @@ export const ImageDimensions = z.object({
 });
 export type ImageDimensions = z.infer<typeof ImageDimensions>;
 
+export const Submitter = z.object({
+  employee_id: z.string().default(""),
+  name: z.string().default(""),
+  role: z.string().default(""),
+  email: z.string().default(""),
+});
+export type Submitter = z.infer<typeof Submitter>;
+
 export const AnalysisResult = z.object({
   diagram_id: z.string(),
   arc_number: z.string().default(""),
   title: z.string().default(""),
   description: z.string().default(""),
+  submitted_by: Submitter.nullable().optional(),
   submitted_at: z.string(),
   filename: z.string(),
   input_format: InputFormat,
@@ -252,6 +261,8 @@ export const AnalysisSummary = z.object({
   diagram_id: z.string(),
   arc_number: z.string().default(""),
   title: z.string().default(""),
+  submitted_by_employee_id: z.string().default(""),
+  submitted_by_name: z.string().default(""),
   submitted_at: z.string(),
   filename: z.string(),
   primary_provider: PrimaryProvider,

@@ -20,6 +20,7 @@ from ..schemas import (
     ParsingWarning,
     ProcessingMs,
     ReviewState,
+    Submitter,
     TrustZone,
 )
 from ..storage import next_arc_number, save_analysis, save_processed, save_upload
@@ -156,6 +157,7 @@ async def analyze_diagram(
     *,
     title: str = "",
     description: str = "",
+    submitted_by: dict[str, str] | None = None,
 ) -> AnalysisResult:
     diagram_id = uuid.uuid4().hex
     arc_number = next_arc_number()
@@ -198,10 +200,22 @@ async def analyze_diagram(
         ex=merged,
         tiles_processed=total_tiles,
     )
+    submitter = None
+    if submitted_by:
+        # Only attach if at least one meaningful field is present.
+        if any((submitted_by.get("employee_id"), submitted_by.get("name"))):
+            submitter = Submitter(
+                employee_id=submitted_by.get("employee_id", ""),
+                name=submitted_by.get("name", ""),
+                role=submitted_by.get("role", ""),
+                email=submitted_by.get("email", ""),
+            )
+
     result = result.model_copy(update={
         "arc_number": arc_number,
         "title": title.strip(),
         "description": description.strip(),
+        "submitted_by": submitter,
     })
     result = normalize.canonicalize_components(result)
     result = normalize.infer_trust_zones_if_missing(result)

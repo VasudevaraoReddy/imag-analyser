@@ -113,9 +113,13 @@ export default function ReportPage() {
   const inventoryTier = inventoryByGroup(d, "tier");
 
   return (
-    <div className="bg-slate-100 min-h-screen">
+    // The global body has overflow:hidden so the app-shell layout stays
+    // pinned. The report needs its own scroll context — h-screen +
+    // overflow-y-auto here. In print mode we drop both so the browser's
+    // pagination can flow naturally across pages.
+    <div className="bg-slate-100 h-screen overflow-y-auto print:h-auto print:overflow-visible">
       {/* Toolbar (hidden on print) */}
-      <div className="no-print text-white" style={{ backgroundColor: YES_BANK_BLUE }}>
+      <div className="no-print text-white sticky top-0 z-10" style={{ backgroundColor: YES_BANK_BLUE }}>
         <div className="max-w-4xl mx-auto px-8 py-3 flex items-center justify-between">
           <Link to={`/results/${d.diagram_id}`} className="inline-flex items-center gap-1 text-sm text-white/85 hover:text-white">
             <ArrowLeft className="w-4 h-4" /> Back to analysis
@@ -173,6 +177,20 @@ export default function ReportPage() {
           <div className="text-white/80 text-sm">
             Generated: {new Date(d.submitted_at).toLocaleString()}
           </div>
+          {(d.submitted_by?.name || d.submitted_by?.employee_id) && (
+            <div className="text-white/80 text-sm">
+              Submitted by:{" "}
+              <span className="text-white font-medium">
+                {d.submitted_by.name || d.submitted_by.employee_id}
+              </span>
+              {d.submitted_by.name && d.submitted_by.employee_id && (
+                <span className="ml-1 font-mono">({d.submitted_by.employee_id})</span>
+              )}
+              {d.submitted_by.role && (
+                <span className="ml-1 text-white/70">· {d.submitted_by.role}</span>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap gap-2 mt-5">
             <ProviderBadge provider={d.primary_provider} />
             {d.cloud_providers.length > 1 && d.cloud_providers.map((p) => (
