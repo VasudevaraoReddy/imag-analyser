@@ -313,9 +313,15 @@ export default function ReportPage() {
             </table>
           </section>
 
-          {/* 6. Flows */}
+          {/* 6. User journeys (primary lens) */}
           <section>
-            <SectionTitle n={6} title="Data flows" />
+            <SectionTitle n={6} title="User journeys" />
+            <ReportJourneys d={d} />
+          </section>
+
+          {/* 7. Appendix: Network view (kept for network engineers) */}
+          <section>
+            <SectionTitle n={7} title="Appendix — Network view (N-S / E-W)" />
             <h3 className="text-sm font-semibold text-slate-700 mt-2 mb-2">Zone-to-zone matrix</h3>
             <FlowMatrix result={d} />
 
@@ -333,7 +339,7 @@ export default function ReportPage() {
           {/* 7. Parsing warnings */}
           {d.parsing_warnings.length > 0 && (
             <section>
-              <SectionTitle n={7} title="Parsing warnings" />
+              <SectionTitle n={8} title="Parsing warnings" />
               <ul className="space-y-2">
                 {d.parsing_warnings.map((w, i) => (
                   <li key={i} className="border-l-4 border-amber-400 bg-amber-50 p-2.5 text-sm">
@@ -350,7 +356,7 @@ export default function ReportPage() {
 
           {/* 8. Processing telemetry */}
           <section>
-            <SectionTitle n={d.parsing_warnings.length > 0 ? 8 : 7} title="Processing telemetry" />
+            <SectionTitle n={d.parsing_warnings.length > 0 ? 9 : 8} title="Processing telemetry" />
             <table className="w-full text-sm">
               <tbody>
                 {[
@@ -478,5 +484,74 @@ function FlowList({ ids, d }: { ids: string[]; d: AnalysisResult }) {
         })}
       </tbody>
     </table>
+  );
+}
+
+function ReportJourneys({ d }: { d: AnalysisResult }) {
+  const journeys = d.journeys ?? [];
+  if (journeys.length === 0) {
+    return (
+      <div className="text-sm text-slate-500">
+        No journeys extracted (the diagram has no entry actor or no recognized sink).
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-slate-600">
+        Each journey traces a meaningful path from an entry actor (a user, the
+        Internet) to a terminal sink (a database, identity provider, secrets
+        vault, or external integration). Journeys are scored by how many trust
+        zones they cross, whether they enter restricted zones, and whether any
+        hop is unencrypted.
+      </p>
+      {journeys.map((j, idx) => (
+        <div key={j.id} className="border border-slate-200 rounded p-3 break-inside-avoid">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+                Journey {idx + 1} · {j.kind} · score {j.score}
+              </div>
+              <div className="font-semibold text-slate-900">{j.title}</div>
+            </div>
+            <div className="text-xs text-slate-500">
+              {j.is_fully_encrypted === true
+                ? "✓ end-to-end TLS"
+                : j.has_unencrypted_hop
+                ? "⚠ unencrypted hop"
+                : "? encryption unverified"}
+            </div>
+          </div>
+          <p className="text-sm text-slate-700 mt-1">{j.narrative}</p>
+          {j.zones_crossed.length > 0 && (
+            <div className="text-xs text-slate-600 mt-1">
+              Zones: {j.zones_crossed.join(" → ")}
+            </div>
+          )}
+          <ol className="mt-2 pl-1 space-y-0.5 text-sm">
+            {j.hops.map((h, i) => (
+              <li key={i} className="text-slate-700">
+                <span className="font-mono text-[11px] text-slate-400 mr-1.5">{i + 1}.</span>
+                <span className="font-medium">{h.from_name}</span>
+                <span className="text-slate-400"> → </span>
+                <span className="font-medium">{h.to_name}</span>
+                <span className="text-xs text-slate-500 ml-2 font-mono">
+                  {h.protocol ?? "?"}
+                  {h.port ? `:${h.port}` : ""}
+                </span>
+                <span className="text-xs ml-2">
+                  {h.encrypted === true ? "🔒" : h.encrypted === false ? "🔓" : ""}
+                </span>
+              </li>
+            ))}
+          </ol>
+          {j.related_findings.length > 0 && (
+            <div className="mt-2 text-xs text-slate-600">
+              Related compliance findings: <span className="font-mono">{j.related_findings.join(", ")}</span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

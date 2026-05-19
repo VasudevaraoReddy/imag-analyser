@@ -8,6 +8,12 @@ type Props = {
   highlightedComponentId?: string | null;
   onSelectComponent?: (id: string) => void;
   showOverlay?: boolean;
+  /**
+   * When set, only the components and connections that participate in this
+   * journey are drawn at full opacity; everything else dims to give the
+   * journey path strong visual prominence.
+   */
+  highlightedJourneyId?: string | null;
 };
 
 const ZONE_COLORS: Record<string, string> = {
@@ -26,7 +32,11 @@ export function ImageWithOverlay({
   highlightedComponentId,
   onSelectComponent,
   showOverlay = true,
+  highlightedJourneyId,
 }: Props) {
+  const journey = (result.journeys ?? []).find((j) => j.id === highlightedJourneyId) ?? null;
+  const journeyComponents = new Set(journey?.component_ids ?? []);
+  const journeyConnections = new Set(journey?.connection_ids ?? []);
   const imgRef = useRef<HTMLImageElement>(null);
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
 
@@ -111,6 +121,10 @@ export function ImageWithOverlay({
             const [x1, y1, x2, y2] = c.evidence.bbox;
             const color = ZONE_COLORS[componentZoneKind(c.id)] ?? "#22c55e";
             const isHi = c.id === highlightedComponentId;
+            // When a journey is highlighted, dim everything that isn't part
+            // of its path so the journey "lights up" on the diagram.
+            const inJourney = journey ? journeyComponents.has(c.id) : true;
+            const baseOpacity = isHi ? 1 : journey && !inJourney ? 0.18 : 0.85;
             return (
               <g key={c.id} style={{ pointerEvents: "auto" }}>
                 <rect
@@ -118,10 +132,10 @@ export function ImageWithOverlay({
                   y={y1 * scale.y}
                   width={(x2 - x1) * scale.x}
                   height={(y2 - y1) * scale.y}
-                  fill={isHi ? `${color}22` : "transparent"}
+                  fill={isHi || (journey && inJourney) ? `${color}22` : "transparent"}
                   stroke={color}
-                  strokeWidth={isHi ? 3 : 1.5}
-                  opacity={isHi ? 1 : 0.85}
+                  strokeWidth={(journey && inJourney) || isHi ? 3 : 1.5}
+                  opacity={baseOpacity}
                   className="cursor-pointer"
                   onClick={() => onSelectComponent?.(c.id)}
                 />
@@ -132,9 +146,21 @@ export function ImageWithOverlay({
             const from = componentCenter(e.from);
             const to = componentCenter(e.to);
             if (!from || !to) return null;
+            const inJourney = journey ? journeyConnections.has(e.id) : true;
             const isNs = nsIds.has(e.id);
             const isEw = ewIds.has(e.id);
-            const color = isNs ? "#f97316" : isEw ? "#0ea5e9" : "#94a3b8";
+            let color = isNs ? "#f97316" : isEw ? "#0ea5e9" : "#94a3b8";
+            let strokeWidth = 1.5;
+            let opacity = 0.8;
+            if (journey) {
+              if (inJourney) {
+                color = "#1c31d6";   // brand — bright spine of the journey
+                strokeWidth = 2.8;
+                opacity = 1;
+              } else {
+                opacity = 0.12;
+              }
+            }
             return (
               <line
                 key={e.id}
@@ -143,10 +169,10 @@ export function ImageWithOverlay({
                 x2={to[0]}
                 y2={to[1]}
                 stroke={color}
-                strokeWidth={1.5}
+                strokeWidth={strokeWidth}
                 strokeDasharray={e.is_data_flow ? "0" : "4 4"}
-                markerEnd={isNs ? "url(#arrow-ns)" : isEw ? "url(#arrow-ew)" : undefined}
-                opacity={0.8}
+                markerEnd={!journey && isNs ? "url(#arrow-ns)" : !journey && isEw ? "url(#arrow-ew)" : undefined}
+                opacity={opacity}
               />
             );
           })}

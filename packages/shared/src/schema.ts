@@ -172,6 +172,47 @@ export const Flows = z.object({
 });
 export type Flows = z.infer<typeof Flows>;
 
+export const JourneyKind = z.enum([
+  "auth", "read", "write", "admin", "integration", "generic",
+]);
+export type JourneyKind = z.infer<typeof JourneyKind>;
+
+export const JourneyHop = z.object({
+  from: z.string(),
+  to: z.string(),
+  from_name: z.string().default(""),
+  to_name: z.string().default(""),
+  label: z.string().nullable().optional(),
+  protocol: z.string().nullable().optional(),
+  port: z.number().nullable().optional(),
+  encrypted: z.boolean().nullable().optional(),
+  from_zone_kind: z.string().default(""),
+  to_zone_kind: z.string().default(""),
+  connection_id: z.string().nullable().optional(),
+  direction_inferred: z.boolean().default(false),
+});
+export type JourneyHop = z.infer<typeof JourneyHop>;
+
+export const Journey = z.object({
+  id: z.string(),
+  title: z.string(),
+  kind: JourneyKind.default("generic"),
+  hops: z.array(JourneyHop).default([]),
+  component_ids: z.array(z.string()).default([]),
+  connection_ids: z.array(z.string()).default([]),
+  zones_crossed: z.array(z.string()).default([]),
+  protocols: z.array(z.string()).default([]),
+  is_fully_encrypted: z.boolean().nullable().optional(),
+  has_unencrypted_hop: z.boolean().default(false),
+  enters_restricted: z.boolean().default(false),
+  starts_external: z.boolean().default(false),
+  related_findings: z.array(z.string()).default([]),
+  score: z.number().int().default(0),
+  narrative: z.string().default(""),
+  warnings: z.array(z.string()).default([]),
+});
+export type Journey = z.infer<typeof Journey>;
+
 export const ComplianceStatus = z.enum(["pass", "fail", "warn", "not_applicable"]);
 export const Severity = z.enum(["info", "low", "medium", "high", "critical"]);
 
@@ -249,6 +290,7 @@ export const AnalysisResult = z.object({
   components: z.array(Component),
   connections: z.array(Connection),
   flows: Flows,
+  journeys: z.array(Journey).default([]),
   compliance_findings: z.array(ComplianceFinding),
   parsing_warnings: z.array(ParsingWarning),
   overall_confidence: z.number().min(0).max(1),

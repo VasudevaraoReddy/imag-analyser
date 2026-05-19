@@ -11,4 +11,7 @@ export type {
   Tier,
   TrustZoneKind,
   ReviewState,
+  Journey,
+  JourneyHop,
+  JourneyKind,
 } from "@bank-arch/shared";

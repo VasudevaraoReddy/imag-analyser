@@ -112,6 +112,57 @@ class ParsingWarning(BaseModel):
     affected_ids: list[str] = Field(default_factory=list)
 
 
+JourneyKind = Literal[
+    "auth",         # ends at an identity provider
+    "read",         # ends at a database / storage read sink
+    "write",        # ends at a database / storage write sink
+    "admin",        # touches a management plane component
+    "integration",  # ends at messaging / SaaS / third-party
+    "generic",
+]
+
+
+class JourneyHop(BaseModel):
+    """One step on a user journey: a directed edge between two components."""
+    from_id: str = Field(alias="from")
+    to_id: str = Field(alias="to")
+    from_name: str = ""
+    to_name: str = ""
+    label: str | None = None
+    protocol: str | None = None
+    port: int | None = None
+    encrypted: bool | None = None
+    from_zone_kind: str = ""
+    to_zone_kind: str = ""
+    connection_id: str | None = None
+    direction_inferred: bool = False  # true if the edge was undirected and we guessed
+
+    def model_dump_alias(self) -> dict:  # type: ignore[type-arg]
+        return self.model_dump(by_alias=True)
+
+
+class Journey(BaseModel):
+    """A meaningful path from an entry actor to a terminal sink."""
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    id: str
+    title: str
+    kind: JourneyKind = "generic"
+    hops: list[JourneyHop] = Field(default_factory=list)
+    component_ids: list[str] = Field(default_factory=list)
+    connection_ids: list[str] = Field(default_factory=list)
+    zones_crossed: list[str] = Field(default_factory=list)  # zone KINDS, in order
+    protocols: list[str] = Field(default_factory=list)
+    is_fully_encrypted: bool | None = None
+    has_unencrypted_hop: bool = False
+    enters_restricted: bool = False
+    starts_external: bool = False
+    related_findings: list[str] = Field(default_factory=list)  # compliance rule ids
+    score: int = 0
+    narrative: str = ""
+    warnings: list[str] = Field(default_factory=list)
+
+
 class ProcessingMs(BaseModel):
     image_prep: int = 0
     doc_intelligence: int = 0
@@ -152,6 +203,7 @@ class AnalysisResult(BaseModel):
     components: list[Component] = Field(default_factory=list)
     connections: list[Connection] = Field(default_factory=list)
     flows: Flows = Field(default_factory=Flows)
+    journeys: list[Journey] = Field(default_factory=list)
     compliance_findings: list[ComplianceFinding] = Field(default_factory=list)
     parsing_warnings: list[ParsingWarning] = Field(default_factory=list)
     overall_confidence: float = Field(default=0.0, ge=0.0, le=1.0)

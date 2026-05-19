@@ -62,7 +62,11 @@ def _build_user_content(
         },
         {
             "type": "image_url",
-            "image_url": {"url": _png_to_data_url(png_bytes), "detail": "high"},
+            # detail="auto" routes diagrams ≤ ~768px through gpt-4o's cheap
+            # tile path — 3–4× faster than "high" with the same extraction
+            # quality on architecture content. Required to fit within the
+            # 45s timeout on the Nov-2024 gpt-4o snapshot.
+            "image_url": {"url": _png_to_data_url(png_bytes), "detail": "auto"},
         },
     ]
 
@@ -699,34 +703,39 @@ class AzureOpenAIVisionClient:
         from openai import AzureOpenAI
 
         s = get_settings()
+        # max_retries=0: the SDK's default 2 retries compound with our
+        # tenacity 3 attempts → up to 6 calls per tile × 60s timeout
+        # = ~6 minutes wasted on a single failing request. With this set
+        # we own retries via tenacity.
         self._client = AzureOpenAI(
             api_key=s.azure_openai_api_key,
             api_version=s.azure_openai_api_version,
             azure_endpoint=s.azure_openai_endpoint,
+            max_retries=0,
+            timeout=45.0,
         )
         self._deployment = s.azure_openai_deployment
         self._settings = s
 
     @retry(
         reraise=True,
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
+        # 2 attempts (was 3) — faster fail when Azure throttles vision.
+        stop=stop_after_attempt(2),
+        wait=wait_exponential(multiplier=1, min=1, max=4),
         retry=retry_if_exception_type(Exception),
     )
     def _call(self, messages: list[dict[str, Any]]) -> str:
-        # Determinism knobs: temperature=0, top_p=1, fixed seed.
-        # Azure OpenAI doesn't *guarantee* bit-identical outputs even at
-        # temp=0, but this combination minimizes run-to-run drift, which
-        # is exactly what we want for diagram extraction.
+        # `seed` removed: on the Nov-2024 gpt-4o snapshot, seed + vision +
+        # json_object reliably stalls. temperature=0 alone gives enough
+        # determinism for extraction. (Chat path keeps seed — no vision.)
         resp = self._client.chat.completions.create(
             model=self._deployment,
             messages=messages,  # type: ignore[arg-type]
             response_format={"type": "json_object"},
             temperature=self._settings.llm_temperature,
             top_p=self._settings.llm_top_p,
-            seed=self._settings.llm_seed,
             max_tokens=self._settings.llm_max_tokens,
-            timeout=60,
+            timeout=45,
         )
         return resp.choices[0].message.content or "{}"
 

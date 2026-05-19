@@ -14,13 +14,13 @@ import { ReviewStatePill } from "../components/StatusPill";
 import { SummaryStats } from "../components/Summary";
 import { FlowMatrix } from "../components/FlowMatrix";
 import { ComplianceChecklist } from "../components/ComplianceChecklist";
+import { JourneysPanel } from "../components/JourneysPanel";
 
 type Tab =
+  | "journeys"
   | "components"
   | "trust_zones"
-  | "flow_matrix"
-  | "north_south"
-  | "east_west"
+  | "network_view"   // flow matrix + N-S + E-W rolled into one secondary tab
   | "compliance"
   | "warnings"
   | "raw";
@@ -33,8 +33,9 @@ export default function ResultsPage() {
     enabled: !!id,
   });
 
-  const [tab, setTab] = useState<Tab>("components");
+  const [tab, setTab] = useState<Tab>("journeys");
   const [highlight, setHighlight] = useState<string | null>(null);
+  const [highlightedJourney, setHighlightedJourney] = useState<string | null>(null);
   const [variant, setVariant] = useState<"original" | "processed">("processed");
   const [showOverlay, setShowOverlay] = useState(true);
 
@@ -42,11 +43,10 @@ export default function ResultsPage() {
   if (error || !data) return <div className="p-6 text-rose-600">Could not load analysis.</div>;
 
   const tabs: { key: Tab; label: string; count?: number }[] = [
+    { key: "journeys", label: "Journeys", count: data.journeys?.length ?? 0 },
     { key: "components", label: "Components", count: data.components.length },
     { key: "trust_zones", label: "Trust zones", count: data.trust_zones.length },
-    { key: "flow_matrix", label: "Flow matrix" },
-    { key: "north_south", label: "North-South", count: data.flows.north_south.length },
-    { key: "east_west", label: "East-West", count: data.flows.east_west.length },
+    { key: "network_view", label: "Network view" },
     { key: "compliance", label: "Compliance", count: data.compliance_findings.length },
     { key: "warnings", label: "Warnings", count: data.parsing_warnings.length },
     { key: "raw", label: "Raw JSON" },
@@ -172,7 +172,24 @@ export default function ResultsPage() {
             highlightedComponentId={highlight}
             onSelectComponent={(id) => setHighlight(id)}
             showOverlay={showOverlay}
+            highlightedJourneyId={highlightedJourney}
           />
+          {highlightedJourney && (
+            <div className="flex items-center justify-between text-xs bg-brand-50 ring-1 ring-brand-100 rounded-md px-3 py-1.5">
+              <span className="text-brand-700">
+                Highlighting journey:{" "}
+                <span className="font-semibold">
+                  {data.journeys?.find((j) => j.id === highlightedJourney)?.title}
+                </span>
+              </span>
+              <button
+                className="text-brand-700 hover:underline"
+                onClick={() => setHighlightedJourney(null)}
+              >
+                Clear
+              </button>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-1">
             <span className="inline-flex items-center gap-1.5">
               <span className="inline-block w-4 h-0.5 bg-flow-ns" /> north-south
@@ -213,6 +230,13 @@ export default function ResultsPage() {
             ))}
           </div>
           <div className="max-h-[900px] overflow-auto">
+            {tab === "journeys" && (
+              <JourneysPanel
+                result={data}
+                selectedJourneyId={highlightedJourney}
+                onSelect={setHighlightedJourney}
+              />
+            )}
             {tab === "components" && (
               <ComponentsTable
                 result={data}
@@ -252,9 +276,28 @@ export default function ResultsPage() {
                 </tbody>
               </table>
             )}
-            {tab === "flow_matrix" && <div className="p-4"><FlowMatrix result={data} /></div>}
-            {tab === "north_south" && <FlowsTable result={data} kind="north_south" />}
-            {tab === "east_west" && <FlowsTable result={data} kind="east_west" />}
+            {tab === "network_view" && (
+              <div className="p-4 space-y-6">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
+                    Zone-to-zone matrix
+                  </div>
+                  <FlowMatrix result={data} />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
+                    North-South flows ({data.flows.north_south.length})
+                  </div>
+                  <FlowsTable result={data} kind="north_south" />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
+                    East-West flows ({data.flows.east_west.length})
+                  </div>
+                  <FlowsTable result={data} kind="east_west" />
+                </div>
+              </div>
+            )}
             {tab === "compliance" && (
               <div className="p-2">
                 <ComplianceChecklist result={data} compact />

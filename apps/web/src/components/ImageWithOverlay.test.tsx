@@ -39,6 +39,7 @@ describe("AnalysisResult fixture parses", () => {
       components: [],
       connections: [],
       flows: { north_south: [], east_west: [] },
+      journeys: [],
       compliance_findings: [],
       parsing_warnings: [],
       overall_confidence: 0.5,

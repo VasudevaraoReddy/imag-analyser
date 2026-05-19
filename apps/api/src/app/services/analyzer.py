@@ -25,7 +25,7 @@ from ..schemas import (
 )
 from ..storage import next_arc_number, save_analysis, save_processed, save_upload
 from . import classifier, compliance, doc_intelligence, image_prep, normalize, tiling
-from . import vision_llm
+from . import journey_extractor, vision_llm
 
 log = structlog.get_logger()
 
@@ -223,6 +223,10 @@ async def analyze_diagram(
     result = classifier.classify_flows(result)
     findings = compliance.run_all(result)
     result = result.model_copy(update={"compliance_findings": findings})
+    # Journey extraction must run AFTER compliance so each journey can
+    # reference the rule ids that touched its components/connections.
+    journeys = journey_extractor.extract_journeys(result)
+    result = result.model_copy(update={"journeys": journeys})
     confidence = _compute_confidence(result)
     result = result.model_copy(update={"overall_confidence": confidence})
     review = _compute_review_state(result)

@@ -1,0 +1,579 @@
+{
+  "diagram_id": "86bc183e59384d0c8bd962e10ca9acd6",
+  "arc_number": "ARC-202605-004",
+  "title": "sss",
+  "description": "",
+  "submitted_by": {
+    "employee_id": "VRC2106734",
+    "name": "Vasu Reddy",
+    "role": "Security Architect",
+    "email": "vasu.reddy@yesbank.in"
+  },
+  "submitted_at": "2026-05-19T04:38:08.282361+00:00",
+  "filename": "ARCHBLOG-1038-fig2.png",
+  "input_format": "png",
+  "image_dimensions": {
+    "width": 936,
+    "height": 556
+  },
+  "tiles_processed": 1,
+  "cloud_providers": [
+    "aws"
+  ],
+  "primary_provider": "aws",
+  "diagram_style": "official_stencil",
+  "trust_zones": [
+    {
+      "id": "tz-presentation",
+      "name": "Presentation Tier",
+      "kind": "internal",
+      "bbox": [
+        751.0,
+        106.0,
+        847.0,
+        120.0
+      ],
+      "evidence": "OCR text: Presentation Tier"
+    },
+    {
+      "id": "tz-business-logic",
+      "name": "Business Logic Tier",
+      "kind": "internal",
+      "bbox": [
+        744.0,
+        302.0,
+        854.0,
+        317.0
+      ],
+      "evidence": "OCR text: Business Logic Tier"
+    },
+    {
+      "id": "tz-data",
+      "name": "Data Tier",
+      "kind": "internal",
+      "bbox": [
+        773.0,
+        499.0,
+        826.0,
+        513.0
+      ],
+      "evidence": "OCR text: Data Tier"
+    }
+  ],
+  "components": [
+    {
+      "id": "c-users",
+      "name": "Users",
+      "canonical_name": "User",
+      "service_type": "user_actor",
+      "provider": "other",
+      "trust_zone": "tz-presentation",
+      "tier": "edge",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Users",
+        "bbox": [
+          32.0,
+          338.0,
+          67.0,
+          351.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-cognito",
+      "name": "Amazon Cognito (Authentication)",
+      "canonical_name": "Amazon Cognito",
+      "service_type": "identity",
+      "provider": "aws",
+      "trust_zone": "tz-presentation",
+      "tier": "web",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Amazon Cognito (Authentication)",
+        "bbox": [
+          282.0,
+          59.0,
+          376.0,
+          88.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-cloudfront",
+      "name": "Amazon CloudFront (Website distribution)",
+      "canonical_name": "Amazon CloudFront",
+      "service_type": "cdn",
+      "provider": "aws",
+      "trust_zone": "tz-presentation",
+      "tier": "web",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Amazon CloudFront (Website distribution)",
+        "bbox": [
+          273.0,
+          162.0,
+          386.0,
+          191.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-s3",
+      "name": "Amazon S3 (Website Assets)",
+      "canonical_name": "Amazon S3",
+      "service_type": "storage_object",
+      "provider": "aws",
+      "trust_zone": "tz-presentation",
+      "tier": "web",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Amazon S3 (Website Assets)",
+        "bbox": [
+          416.0,
+          162.0,
+          511.0,
+          191.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-api-gateway",
+      "name": "Amazon API Gateway",
+      "canonical_name": "Amazon API Gateway",
+      "service_type": "api_gateway",
+      "provider": "aws",
+      "trust_zone": "tz-business-logic",
+      "tier": "app",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Amazon API Gateway",
+        "bbox": [
+          268.0,
+          337.0,
+          390.0,
+          352.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-lambda",
+      "name": "AWS Lambda (Backend)",
+      "canonical_name": "AWS Lambda",
+      "service_type": "compute_serverless",
+      "provider": "aws",
+      "trust_zone": "tz-business-logic",
+      "tier": "app",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "AWS Lambda (Backend)",
+        "bbox": [
+          465.0,
+          338.0,
+          544.0,
+          367.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-dynamodb",
+      "name": "Amazon DynamoDB",
+      "canonical_name": "Amazon DynamoDB",
+      "service_type": "database_nosql",
+      "provider": "aws",
+      "trust_zone": "tz-data",
+      "tier": "data",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": "Amazon DynamoDB",
+        "bbox": [
+          447.0,
+          539.0,
+          562.0,
+          554.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "c-users",
+      "to": "c-cognito",
+      "label": "Authenticate",
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e2",
+      "from": "c-users",
+      "to": "c-cloudfront",
+      "label": "Navigate",
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e3",
+      "from": "c-cloudfront",
+      "to": "c-s3",
+      "label": "Origin",
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": true,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e4",
+      "from": "c-s3",
+      "to": "c-cloudfront",
+      "label": "Contains",
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": false,
+      "is_data_flow": false,
+      "evidence": null
+    },
+    {
+      "id": "e5",
+      "from": "c-users",
+      "to": "c-api-gateway",
+      "label": "Call API",
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e6",
+      "from": "c-api-gateway",
+      "to": "c-lambda",
+      "label": "Backend Integration",
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e7",
+      "from": "c-lambda",
+      "to": "c-dynamodb",
+      "label": "R/W",
+      "protocol": null,
+      "port": null,
+      "encrypted": null,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    }
+  ],
+  "flows": {
+    "north_south": [],
+    "east_west": [
+      "e1",
+      "e2",
+      "e3",
+      "e5",
+      "e6",
+      "e7"
+    ]
+  },
+  "journeys": [
+    {
+      "id": "j-3",
+      "title": "Users \u2192 Amazon DynamoDB",
+      "kind": "write",
+      "hops": [
+        {
+          "from": "c-users",
+          "to": "c-api-gateway",
+          "from_name": "Users",
+          "to_name": "Amazon API Gateway",
+          "label": "Call API",
+          "protocol": null,
+          "port": null,
+          "encrypted": null,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e5",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-api-gateway",
+          "to": "c-lambda",
+          "from_name": "Amazon API Gateway",
+          "to_name": "AWS Lambda (Backend)",
+          "label": "Backend Integration",
+          "protocol": null,
+          "port": null,
+          "encrypted": null,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e6",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-lambda",
+          "to": "c-dynamodb",
+          "from_name": "AWS Lambda (Backend)",
+          "to_name": "Amazon DynamoDB",
+          "label": "R/W",
+          "protocol": null,
+          "port": null,
+          "encrypted": null,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e7",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-users",
+        "c-api-gateway",
+        "c-lambda",
+        "c-dynamodb"
+      ],
+      "connection_ids": [
+        "e5",
+        "e6",
+        "e7"
+      ],
+      "zones_crossed": [
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": false,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 36,
+      "narrative": "Users writes to Amazon DynamoDB crossing internal with mixed or unverified encryption.",
+      "warnings": []
+    },
+    {
+      "id": "j-2",
+      "title": "Users \u2192 Amazon S3 (Website Assets)",
+      "kind": "write",
+      "hops": [
+        {
+          "from": "c-users",
+          "to": "c-cloudfront",
+          "from_name": "Users",
+          "to_name": "Amazon CloudFront (Website distribution)",
+          "label": "Navigate",
+          "protocol": null,
+          "port": null,
+          "encrypted": null,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e2",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-cloudfront",
+          "to": "c-s3",
+          "from_name": "Amazon CloudFront (Website distribution)",
+          "to_name": "Amazon S3 (Website Assets)",
+          "label": "Origin",
+          "protocol": null,
+          "port": null,
+          "encrypted": null,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e3",
+          "direction_inferred": true
+        }
+      ],
+      "component_ids": [
+        "c-users",
+        "c-cloudfront",
+        "c-s3"
+      ],
+      "connection_ids": [
+        "e2",
+        "e3"
+      ],
+      "zones_crossed": [
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": false,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 34,
+      "narrative": "Users writes to Amazon S3 (Website Assets) crossing internal with mixed or unverified encryption.",
+      "warnings": [
+        "One or more hop directions were inferred from service-type heuristics."
+      ]
+    },
+    {
+      "id": "j-1",
+      "title": "Users \u2192 Amazon Cognito (Authentication)",
+      "kind": "auth",
+      "hops": [
+        {
+          "from": "c-users",
+          "to": "c-cognito",
+          "from_name": "Users",
+          "to_name": "Amazon Cognito (Authentication)",
+          "label": "Authenticate",
+          "protocol": null,
+          "port": null,
+          "encrypted": null,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e1",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-users",
+        "c-cognito"
+      ],
+      "connection_ids": [
+        "e1"
+      ],
+      "zones_crossed": [
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": false,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 32,
+      "narrative": "Users authenticates against Amazon Cognito (Authentication) crossing internal with mixed or unverified encryption.",
+      "warnings": []
+    }
+  ],
+  "compliance_findings": [
+    {
+      "rule": "WAF_BEFORE_APP",
+      "status": "pass",
+      "severity": "info",
+      "message": "All external ingress passes through an edge guard (WAF / CDN / API gateway / load balancer).",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "NO_PUBLIC_DATA_TIER",
+      "status": "pass",
+      "severity": "info",
+      "message": "No data-tier components are exposed in a public trust zone.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "TLS_ON_EXTERNAL_EDGES",
+      "status": "pass",
+      "severity": "info",
+      "message": "All external edges use encrypted protocols.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "ENCRYPTION_TO_RESTRICTED",
+      "status": "pass",
+      "severity": "info",
+      "message": "All edges into restricted zones are encrypted.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "PRIVATE_ENDPOINTS_FOR_PAAS",
+      "status": "not_applicable",
+      "severity": "info",
+      "message": "No Azure PaaS components detected.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "IDENTITY_PRESENT",
+      "status": "not_applicable",
+      "severity": "info",
+      "message": "No external north-south flows detected.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "LOGGING_PRESENT",
+      "status": "warn",
+      "severity": "low",
+      "message": "No logging, monitoring, or SIEM component shown on the diagram.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "SECRETS_VAULT_PRESENT",
+      "status": "warn",
+      "severity": "low",
+      "message": "Databases or third-party SaaS present, but no secrets vault is shown.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    }
+  ],
+  "parsing_warnings": [
+    {
+      "kind": "unknown_icon",
+      "message": "Component 'Amazon Cognito (Authentication)' had service_type 'identity_management' which is not in the taxonomy; clamped to 'unknown'.",
+      "affected_ids": [
+        "c-cognito"
+      ]
+    },
+    {
+      "kind": "unknown_icon",
+      "message": "Component 'Amazon CloudFront (Website distribution)' had service_type 'content_delivery' which is not in the taxonomy; clamped to 'unknown'.",
+      "affected_ids": [
+        "c-cloudfront"
+      ]
+    },
+    {
+      "kind": "unknown_icon",
+      "message": "Component 'AWS Lambda (Backend)' had service_type 'compute_function' which is not in the taxonomy; clamped to 'unknown'.",
+      "affected_ids": [
+        "c-lambda"
+      ]
+    }
+  ],
+  "overall_confidence": 0.81,
+  "review_state": "needs_human_review",
+  "processing_ms": {
+    "image_prep": 35,
+    "doc_intelligence": 4597,
+    "vision_llm": 90753,
+    "post_process": 7,
+    "total": 95392
+  }
+}
