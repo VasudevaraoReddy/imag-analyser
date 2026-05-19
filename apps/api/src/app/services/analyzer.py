@@ -27,7 +27,9 @@ from ..storage import next_arc_number, save_analysis, save_processed, save_uploa
 from . import classifier, compliance, doc_intelligence, image_prep, normalize, tiling
 from . import journey_extractor, vision_llm
 
-log = structlog.get_logger()
+from ..logging_setup import get_logger  # noqa: E402
+
+log = get_logger("analyzer")
 
 
 def _detect_input_format(filename: str, detected: str) -> InputFormat:

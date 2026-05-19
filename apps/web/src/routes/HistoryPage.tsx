@@ -86,13 +86,22 @@ export default function HistoryPage() {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.diagram_id} className="border-t border-slate-100 hover:bg-brand-50/40">
-                  <td className="px-4 py-2.5 font-mono text-xs text-brand-700">
-                    {r.arc_number || "—"}
+                  <td className="px-4 py-2.5 font-mono text-xs">
+                    {r.arc_number ? (
+                      <Link
+                        to={`/results/${r.diagram_id}`}
+                        className="text-brand-700 hover:underline font-semibold"
+                      >
+                        {r.arc_number}
+                      </Link>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-2.5">
-                    <Link to={`/results/${r.diagram_id}`} className="text-brand hover:underline font-medium">
+                    <div className="font-medium text-slate-900">
                       {r.title || r.filename}
-                    </Link>
+                    </div>
                     {r.title && (
                       <div className="text-xs text-slate-500">{r.filename}</div>
                     )}

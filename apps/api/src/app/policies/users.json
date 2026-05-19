@@ -1,12 +1,22 @@
 {
   "version": 1,
+  "_note": "MVP sample credentials. Replace with Entra ID / OAuth before non-localhost. Passwords are PLAINTEXT for demo convenience; production must hash with bcrypt/argon2. Set is_admin=true to grant access to /admin/logs.",
   "users": [
     {
       "employee_id": "VRC2106734",
       "password": "yesbank@123",
       "name": "Vasu Reddy",
       "role": "Security Architect",
-      "email": "vasu.reddy@yesbank.in"
+      "email": "vasu.reddy@yesbank.in",
+      "is_admin": false
+    },
+    {
+      "employee_id": "ADMIN",
+      "password": "yesbank@admin",
+      "name": "Platform Admin",
+      "role": "Platform Administrator",
+      "email": "platform-admin@yesbank.in",
+      "is_admin": true
     }
   ]
 }

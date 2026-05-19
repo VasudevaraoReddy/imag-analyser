@@ -6,6 +6,8 @@ import HistoryPage from "./routes/HistoryPage";
 import ReportPage from "./routes/ReportPage";
 import ChatPage from "./routes/ChatPage";
 import LoginPage from "./routes/LoginPage";
+import LogsPage from "./routes/LogsPage";
+import UsagePage from "./routes/UsagePage";
 import { Sidebar } from "./components/Sidebar";
 import { clearAuth, useAuth } from "./lib/auth";
 import { YES_BANK_BLUE, YES_BANK_RED, YES_BANK_LOGO } from "./lib/brand";
@@ -109,6 +111,8 @@ export default function App() {
               <Route path="/results/:id" element={<ResultsPage />} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/history" element={<HistoryPage />} />
+              <Route path="/admin/logs" element={<LogsPage />} />
+              <Route path="/admin/usage" element={<UsagePage />} />
             </Routes>
           </main>
         </div>

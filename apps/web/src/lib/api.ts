@@ -2,8 +2,26 @@ import { AnalysisResult, AnalysisSummary } from "@bank-arch/shared";
 
 const BASE = "/api";
 
+// Read the cached auth user (set by routes/LoginPage on sign-in) and
+// attach `Authorization: Bearer <token>` to every request. Keeping this
+// inside api.ts avoids importing React (auth.ts has a hook).
+function authHeader(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem("bank-arch.auth.user");
+    if (!raw) return {};
+    const u = JSON.parse(raw) as { token?: string };
+    return u.token ? { Authorization: `Bearer ${u.token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 async function jsonFetch<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, init);
+  const headers: Record<string, string> = {
+    ...(authHeader()),
+    ...((init?.headers as Record<string, string>) || {}),
+  };
+  const res = await fetch(input, { ...init, headers });
   if (!res.ok) {
     let detail: unknown;
     try {
@@ -66,8 +84,118 @@ export type LoginResponse = {
   name: string;
   role: string;
   email: string;
+  is_admin: boolean;
   token: string;
 };
+
+// ---------------------------------------------------------------------------
+// Admin: logs viewer
+// ---------------------------------------------------------------------------
+
+export type LogEntry = Record<string, unknown> & {
+  timestamp?: string;
+  level?: string;
+  event?: string;
+  request_id?: string;
+  employee_id?: string;
+  logger?: string;
+};
+
+export type LogsQuery = {
+  date?: string;
+  employee_id?: string;
+  request_id?: string;
+  event?: string;
+  level?: string;
+  text?: string;
+  limit?: number;
+  offset?: number;
+  order?: "asc" | "desc";
+};
+
+export type LogsResponse = {
+  date: string;
+  files: string[];
+  total: number;
+  items: LogEntry[];
+  limit: number;
+  offset: number;
+  order: "asc" | "desc";
+};
+
+export async function fetchLogs(q: LogsQuery = {}): Promise<LogsResponse> {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(q)) {
+    if (v !== undefined && v !== "" && v !== null) {
+      params.set(k, String(v));
+    }
+  }
+  return jsonFetch<LogsResponse>(`${BASE}/admin/logs?${params.toString()}`);
+}
+
+export async function listLogFiles(): Promise<{ files: { name: string; size_bytes: number; modified_at: string }[] }> {
+  return jsonFetch(`${BASE}/admin/logs/files`);
+}
+
+// ---------------------------------------------------------------------------
+// Admin: usage / token dashboard
+// ---------------------------------------------------------------------------
+
+export type UsageSummary = {
+  window_days: number;
+  totals: {
+    calls: number;
+    tokens: number;
+    prompt_tokens: number;
+    completion_tokens: number;
+    cost_usd: number;
+    errors: number;
+    avg_duration_ms: number;
+  };
+  today: { calls: number; tokens: number; cost_usd: number };
+  by_kind: { kind: string; calls: number; tokens: number }[];
+  by_model: { model: string; tokens: number }[];
+  by_employee: {
+    employee_id: string;
+    employee_name: string;
+    calls: number;
+    tokens: number;
+    cost_usd: number;
+  }[];
+  by_status: { status: string; calls: number }[];
+  current_model: {
+    deployment: string;
+    model: string | null;
+    system_fingerprint: string | null;
+  };
+};
+
+export type UsageEvent = {
+  timestamp: string;
+  kind: string;
+  deployment: string;
+  model: string | null;
+  system_fingerprint: string | null;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  duration_ms: number;
+  status: string;
+  error_type: string | null;
+  request_id: string | null;
+  employee_id: string | null;
+  employee_name: string | null;
+  analysis_id: string | null;
+  cost_usd: number;
+};
+
+export async function fetchUsageSummary(days = 30): Promise<UsageSummary> {
+  return jsonFetch<UsageSummary>(`${BASE}/admin/usage/summary?days=${days}`);
+}
+
+export async function fetchUsageRecent(limit = 100): Promise<{ items: UsageEvent[] }> {
+  return jsonFetch(`${BASE}/admin/usage/recent?limit=${limit}`);
+}
 
 export async function login(
   employee_id: string,

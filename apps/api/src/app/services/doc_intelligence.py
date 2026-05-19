@@ -20,7 +20,9 @@ from tenacity import (
 
 from ..config import get_settings
 
-log = structlog.get_logger()
+from ..logging_setup import get_logger, time_block  # noqa: E402
+
+log = get_logger("doc_intelligence")
 
 
 @dataclass
@@ -102,7 +104,10 @@ class AzureDocIntelligenceClient:
                     )
             return OCRResult(lines=lines)
 
-        return await asyncio.to_thread(_run)
+        with time_block(log, "doc_intel.extract", input_bytes=len(png_bytes)) as ctx:
+            result = await asyncio.to_thread(_run)
+            ctx["ocr_lines"] = len(result.lines)
+            return result
 
 
 def get_client() -> AzureDocIntelligenceClient | MockOCRClient:

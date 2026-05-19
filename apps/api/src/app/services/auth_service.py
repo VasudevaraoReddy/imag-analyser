@@ -1,9 +1,14 @@
 """Local file-backed authentication for the MVP.
 
 Reads sample credentials from ``policies/users.json``. Verification uses
-constant-time comparison to avoid trivial timing leaks. Replace this
-module with an Entra ID / OAuth integration before deploying anywhere
-beyond localhost.
+constant-time comparison to avoid trivial timing leaks.
+
+Tokens are now **server-side validated**: when a user signs in we mint
+an opaque token and remember which user it belongs to. Subsequent
+requests pass the token via ``Authorization: Bearer <token>`` and we
+look up the bound user. The in-memory token store is good enough for
+the MVP; before any non-localhost deployment, replace this whole
+module with Entra ID / OAuth.
 """
 
 from __future__ import annotations
@@ -11,11 +16,16 @@ from __future__ import annotations
 import hmac
 import json
 import secrets
+import time
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 USERS_FILE = Path(__file__).resolve().parent.parent / "policies" / "users.json"
+
+# token → { user, issued_at }
+_TOKEN_STORE: dict[str, dict[str, Any]] = {}
+_TOKEN_TTL_SECONDS = 60 * 60 * 8  # 8 hours
 
 
 @lru_cache(maxsize=1)
@@ -63,11 +73,42 @@ def _public_view(u: dict[str, Any]) -> dict[str, Any]:
         "name": u.get("name", ""),
         "role": u.get("role", "viewer"),
         "email": u.get("email", ""),
+        "is_admin": bool(u.get("is_admin", False)),
     }
 
 
-def issue_token() -> str:
-    """Opaque session token. Not validated server-side in the MVP — the
-    client just stores it for display. Replace with a real JWT once the
-    auth flow upgrades to Entra ID."""
-    return secrets.token_urlsafe(32)
+def issue_token(user: dict[str, Any]) -> str:
+    """Mint a token bound to the given user record."""
+    token = secrets.token_urlsafe(32)
+    _TOKEN_STORE[token] = {
+        "user": user,
+        "issued_at": time.time(),
+    }
+    return token
+
+
+def user_for_token(token: str) -> dict[str, Any] | None:
+    """Return the public user record for a token, or None if expired/invalid."""
+    if not token:
+        return None
+    entry = _TOKEN_STORE.get(token)
+    if entry is None:
+        return None
+    if time.time() - entry["issued_at"] > _TOKEN_TTL_SECONDS:
+        _TOKEN_STORE.pop(token, None)
+        return None
+    return entry["user"]
+
+
+def revoke_token(token: str) -> None:
+    _TOKEN_STORE.pop(token, None)
+
+
+def extract_bearer(authorization_header: str | None) -> str | None:
+    """Pull the token out of an Authorization header."""
+    if not authorization_header:
+        return None
+    parts = authorization_header.strip().split(None, 1)
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None
+    return parts[1].strip() or None

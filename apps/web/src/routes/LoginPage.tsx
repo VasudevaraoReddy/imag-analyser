@@ -31,6 +31,7 @@ export default function LoginPage() {
         name: user.name,
         role: user.role,
         email: user.email,
+        is_admin: Boolean((user as { is_admin?: boolean }).is_admin),
         token: user.token,
         signed_in_at: new Date().toISOString(),
       });

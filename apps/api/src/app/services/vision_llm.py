@@ -24,10 +24,21 @@ from tenacity import (
 )
 
 from ..config import get_settings
+from ..logging_setup import get_logger, safe_preview, time_block
 from ..schemas import LLMExtraction
+from . import usage_tracker
 from .doc_intelligence import OCRResult
 
-log = structlog.get_logger()
+log = get_logger("vision_llm")
+
+
+def _ctx_field(name: str) -> Any:
+    """Pull a field from structlog contextvars (set by HTTP middleware)."""
+    try:
+        import structlog
+        return structlog.contextvars.get_contextvars().get(name)
+    except Exception:  # noqa: BLE001
+        return None
 
 PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
 
@@ -712,32 +723,89 @@ class AzureOpenAIVisionClient:
             api_version=s.azure_openai_api_version,
             azure_endpoint=s.azure_openai_endpoint,
             max_retries=0,
-            timeout=45.0,
+            # 180s SDK-level read timeout. Combined with our tenacity
+            # wrapper (2 attempts), worst case per analyze tile is ~360s.
+            timeout=180.0,
         )
         self._deployment = s.azure_openai_deployment
         self._settings = s
 
     @retry(
         reraise=True,
-        # 2 attempts (was 3) — faster fail when Azure throttles vision.
+        # 2 attempts. Backoff capped at 8s between attempts.
         stop=stop_after_attempt(2),
-        wait=wait_exponential(multiplier=1, min=1, max=4),
+        wait=wait_exponential(multiplier=1, min=1, max=8),
         retry=retry_if_exception_type(Exception),
     )
     def _call(self, messages: list[dict[str, Any]]) -> str:
         # `seed` removed: on the Nov-2024 gpt-4o snapshot, seed + vision +
         # json_object reliably stalls. temperature=0 alone gives enough
         # determinism for extraction. (Chat path keeps seed — no vision.)
-        resp = self._client.chat.completions.create(
-            model=self._deployment,
-            messages=messages,  # type: ignore[arg-type]
-            response_format={"type": "json_object"},
-            temperature=self._settings.llm_temperature,
-            top_p=self._settings.llm_top_p,
-            max_tokens=self._settings.llm_max_tokens,
-            timeout=45,
-        )
-        return resp.choices[0].message.content or "{}"
+        try:
+            payload_bytes = len(json.dumps(messages))
+        except Exception:  # noqa: BLE001
+            payload_bytes = -1
+        import time as _t
+        started = _t.perf_counter()
+        try:
+            with time_block(
+                log,
+                "vision_llm.azure_call",
+                deployment=self._deployment,
+                payload_bytes=payload_bytes,
+                max_tokens=self._settings.llm_max_tokens,
+                temperature=self._settings.llm_temperature,
+            ) as ctx:
+                resp = self._client.chat.completions.create(
+                    model=self._deployment,
+                    messages=messages,  # type: ignore[arg-type]
+                    response_format={"type": "json_object"},
+                    temperature=self._settings.llm_temperature,
+                    top_p=self._settings.llm_top_p,
+                    max_tokens=self._settings.llm_max_tokens,
+                    timeout=180,
+                )
+                content = resp.choices[0].message.content or "{}"
+                usage = getattr(resp, "usage", None)
+                ctx["response_chars"] = len(content)
+                ctx["finish_reason"] = resp.choices[0].finish_reason if resp.choices else None
+                pt = getattr(usage, "prompt_tokens", None) if usage else None
+                ct = getattr(usage, "completion_tokens", None) if usage else None
+                ctx["prompt_tokens"] = pt
+                ctx["completion_tokens"] = ct
+                ctx["total_tokens"] = getattr(usage, "total_tokens", None) if usage else None
+                ctx["model"] = getattr(resp, "model", None)
+                ctx["system_fingerprint"] = getattr(resp, "system_fingerprint", None)
+
+                # ── usage ledger ──
+                usage_tracker.record(
+                    kind="vision_llm",
+                    deployment=self._deployment,
+                    model=getattr(resp, "model", None),
+                    system_fingerprint=getattr(resp, "system_fingerprint", None),
+                    prompt_tokens=pt, completion_tokens=ct,
+                    duration_ms=int((_t.perf_counter() - started) * 1000),
+                    status="ok",
+                    request_id=_ctx_field("request_id"),
+                    employee_id=_ctx_field("employee_id"),
+                    employee_name=_ctx_field("employee_name"),
+                )
+                return content
+        except Exception as exc:
+            # Always record failures so the dashboard can show error rate.
+            usage_tracker.record(
+                kind="vision_llm",
+                deployment=self._deployment,
+                model=None, system_fingerprint=None,
+                prompt_tokens=0, completion_tokens=0,
+                duration_ms=int((_t.perf_counter() - started) * 1000),
+                status="error",
+                error_type=type(exc).__name__,
+                request_id=_ctx_field("request_id"),
+                employee_id=_ctx_field("employee_id"),
+                employee_name=_ctx_field("employee_name"),
+            )
+            raise
 
     async def extract(
         self,
@@ -754,7 +822,20 @@ class AzureOpenAIVisionClient:
             {"role": "system", "content": system},
             {"role": "user", "content": user_content},
         ]
+        log.info(
+            "vision_llm.extract.begin",
+            png_bytes=len(png_bytes),
+            ocr_lines=len(ocr.lines),
+            image_width=image_width,
+            image_height=image_height,
+            system_prompt_chars=len(system),
+        )
         raw = await asyncio.to_thread(self._call, messages)
+        log.info(
+            "vision_llm.extract.raw_response",
+            response_preview=safe_preview(raw, 400),
+            response_chars=len(raw),
+        )
         try:
             parsed = json.loads(raw)
         except json.JSONDecodeError as e:

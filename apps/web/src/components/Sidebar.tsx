@@ -1,12 +1,14 @@
 import { NavLink } from "react-router-dom";
 import clsx from "clsx";
-import { FilePlus2, Library, MessageSquare } from "lucide-react";
+import { FilePlus2, Library, MessageSquare, ScrollText, Sparkles } from "lucide-react";
+import { useAuth } from "../lib/auth";
 
 type Item = {
   to: string;
   label: string;
   caption: string;
   Icon: typeof FilePlus2;
+  adminOnly?: boolean;
 };
 
 const ITEMS: Item[] = [
@@ -28,16 +30,33 @@ const ITEMS: Item[] = [
     caption: "Ask about an architecture",
     Icon: MessageSquare,
   },
+  {
+    to: "/admin/usage",
+    label: "AI Usage",
+    caption: "Tokens, cost, model",
+    Icon: Sparkles,
+    adminOnly: true,
+  },
+  {
+    to: "/admin/logs",
+    label: "System logs",
+    caption: "Platform-admin only",
+    Icon: ScrollText,
+    adminOnly: true,
+  },
 ];
 
 export function Sidebar() {
+  const { user } = useAuth();
+  const items = ITEMS.filter((i) => !i.adminOnly || user?.is_admin);
+
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-slate-200 flex flex-col no-print h-full overflow-y-auto">
       <div className="px-3 py-3 text-[10px] uppercase tracking-[0.18em] text-slate-500 font-semibold">
         Workspace
       </div>
       <nav className="flex-1 px-2 space-y-1">
-        {ITEMS.map(({ to, label, caption, Icon }) => (
+        {items.map(({ to, label, caption, Icon, adminOnly }) => (
           <NavLink
             key={to}
             to={to}
@@ -60,7 +79,14 @@ export function Sidebar() {
                   )}
                 />
                 <div className="leading-tight">
-                  <div className="font-medium">{label}</div>
+                  <div className="font-medium inline-flex items-center gap-1.5">
+                    {label}
+                    {adminOnly && (
+                      <span className="text-[9px] uppercase tracking-wider bg-rose-100 text-rose-700 px-1 py-px rounded font-bold">
+                        Admin
+                      </span>
+                    )}
+                  </div>
                   <div className={clsx(
                     "text-[11px]",
                     isActive ? "text-brand-600" : "text-slate-500",

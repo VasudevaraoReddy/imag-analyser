@@ -11,6 +11,7 @@ export type AuthUser = {
   name: string;
   role: string;
   email: string;
+  is_admin: boolean;
   token: string;
   signed_in_at: string; // ISO
 };

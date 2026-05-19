@@ -18,7 +18,18 @@ from ..config import get_settings
 from ..schemas import AnalysisResult
 from ..storage import load_analysis
 
-log = structlog.get_logger()
+from ..logging_setup import get_logger, safe_preview, time_block  # noqa: E402
+from . import usage_tracker  # noqa: E402
+
+log = get_logger("chatbot")
+
+
+def _ctx_field(name: str):
+    try:
+        import structlog
+        return structlog.contextvars.get_contextvars().get(name)
+    except Exception:  # noqa: BLE001
+        return None
 
 CHAT_SYSTEM = """You are an internal assistant for YES BANK cloud-architecture review.
 You help engineers and architects understand analysis results produced by the
@@ -213,15 +224,67 @@ class AzureOpenAIChatClient:
         retry=retry_if_exception_type(Exception),
     )
     def _call(self, messages: list[dict[str, Any]]) -> str:
-        resp = self._client.chat.completions.create(
-            model=self._deployment,
-            messages=messages,  # type: ignore[arg-type]
-            temperature=0.2,
-            top_p=0.9,
-            max_tokens=1024,
-            timeout=60,
-        )
-        return resp.choices[0].message.content or ""
+        try:
+            payload_bytes = len(json.dumps(messages))
+        except Exception:  # noqa: BLE001
+            payload_bytes = -1
+        import time as _t
+        started = _t.perf_counter()
+        try:
+            with time_block(
+                log,
+                "chatbot.azure_call",
+                deployment=self._deployment,
+                payload_bytes=payload_bytes,
+                message_count=len(messages),
+            ) as ctx:
+                resp = self._client.chat.completions.create(
+                    model=self._deployment,
+                    messages=messages,  # type: ignore[arg-type]
+                    temperature=0.2,
+                    top_p=0.9,
+                    max_tokens=1024,
+                    timeout=60,
+                )
+                content = resp.choices[0].message.content or ""
+                usage = getattr(resp, "usage", None)
+                ctx["response_chars"] = len(content)
+                ctx["response_preview"] = safe_preview(content, 400)
+                pt = getattr(usage, "prompt_tokens", None) if usage else None
+                ct = getattr(usage, "completion_tokens", None) if usage else None
+                ctx["prompt_tokens"] = pt
+                ctx["completion_tokens"] = ct
+                ctx["total_tokens"] = getattr(usage, "total_tokens", None) if usage else None
+                ctx["model"] = getattr(resp, "model", None)
+                ctx["finish_reason"] = resp.choices[0].finish_reason if resp.choices else None
+
+                usage_tracker.record(
+                    kind="chat",
+                    deployment=self._deployment,
+                    model=getattr(resp, "model", None),
+                    system_fingerprint=getattr(resp, "system_fingerprint", None),
+                    prompt_tokens=pt, completion_tokens=ct,
+                    duration_ms=int((_t.perf_counter() - started) * 1000),
+                    status="ok",
+                    request_id=_ctx_field("request_id"),
+                    employee_id=_ctx_field("employee_id"),
+                    employee_name=_ctx_field("employee_name"),
+                )
+                return content
+        except Exception as exc:
+            usage_tracker.record(
+                kind="chat",
+                deployment=self._deployment,
+                model=None, system_fingerprint=None,
+                prompt_tokens=0, completion_tokens=0,
+                duration_ms=int((_t.perf_counter() - started) * 1000),
+                status="error",
+                error_type=type(exc).__name__,
+                request_id=_ctx_field("request_id"),
+                employee_id=_ctx_field("employee_id"),
+                employee_name=_ctx_field("employee_name"),
+            )
+            raise
 
     def _build_messages(
         self,
