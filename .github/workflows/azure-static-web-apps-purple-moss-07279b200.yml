@@ -22,21 +22,31 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      # 🔑 Install ALL workspaces from the root. This is what makes
-      # @bank-arch/shared resolvable inside apps/web/.
+      # 1) Install everything from the repo root. npm workspaces will
+      #    symlink @bank-arch/shared into apps/web/node_modules.
       - name: Install monorepo dependencies
-        run: npm install
+        run: npm ci || npm install
 
-      # 🔑 Build the shared types package FIRST so apps/web can import them.
-      - name: Build shared package
+      # 2) Build the shared package FIRST. This produces packages/shared/dist
+      #    which apps/web's tsc -b can find via the project reference.
+      - name: Build @bank-arch/shared
         run: npm run build --workspace=@bank-arch/shared
 
-      # 🔑 Build the web app (also runs tsc -b, which now sees the shared package).
-      - name: Build web
+      # 3) Sanity check — fail fast if shared didn't produce its outputs.
+      - name: Verify shared package output
+        run: |
+          ls -la packages/shared/dist
+          test -f packages/shared/dist/index.js || (echo "ERROR: shared dist/ is empty" && exit 1)
+          test -f packages/shared/dist/index.d.ts || (echo "ERROR: shared dist/index.d.ts missing" && exit 1)
+
+      # 4) Build the web app.
+      - name: Build @bank-arch/web
         run: npm run build --workspace=@bank-arch/web
 
-      # Now hand the pre-built dist to SWA and tell it not to rebuild.
+      # 5) Hand the prebuilt dist to SWA. skip_app_build prevents SWA from
+      #    running its own broken single-package build.
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -47,7 +57,8 @@ jobs:
           app_location: "apps/web"
           api_location: ""
           output_location: "dist"
-          skip_app_build: true            # ← we already built it above
+          skip_app_build: true
+          skip_api_build: true
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
