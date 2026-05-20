@@ -42,7 +42,7 @@ jobs:
         env:
           # Bakes the backend URL into the JS bundle at build time.
           # Local dev still uses /api via Vite proxy (the api.ts fallback).
-          VITE_API_BASE: 'https://image-analysis-be-ftenc4c2d2ehgye3.southindia-01.azurewebsites.net/'
+          VITE_API_BASE: 'https://image-analysis-be-ftenc4c2d2ehgye3.southindia-01.azurewebsites.net/api'
         run: npm run build --workspace=@bank-arch/web
 
       - name: Upload artifact for deployment
