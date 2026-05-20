@@ -1,6 +1,9 @@
 import { AnalysisResult, AnalysisSummary } from "@bank-arch/shared";
 
-const BASE = "/api";
+// Backend URL — baked at build time from VITE_API_BASE env var.
+// In Azure: workflow sets VITE_API_BASE to the BE App Service hostname.
+// Local dev: env var is empty, falls back to "/api" which Vite proxies to localhost:8000.
+const BASE = import.meta.env.VITE_API_BASE || "/api";
 
 // Read the cached auth user (set by routes/LoginPage on sign-in) and
 // attach `Authorization: Bearer <token>` to every request. Keeping this
