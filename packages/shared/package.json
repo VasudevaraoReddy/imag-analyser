@@ -4,23 +4,27 @@
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
   "scripts": {
-    "build": "tsc -b --force",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+    "build": "tsc -b",
+    "dev": "tsc -b -w",
+    "lint": "eslint src --ext ts,tsx",
+    "test": "vitest run",
+    "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
   }
 }
