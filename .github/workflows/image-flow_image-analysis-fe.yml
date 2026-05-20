@@ -22,18 +22,26 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '24.x'
+        
+        # Install the whole monorepo so @bank-arch/shared resolves
+      - name: Install monorepo dependencies
+        run: npm install
 
-      - name: npm install, build, and test
+      # Build the shared types package first
+      - name: Build @bank-arch/shared
         run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+          rm -rf packages/shared/dist packages/shared/tsconfig.tsbuildinfo
+          npx tsc -b packages/shared --force
 
+      # Build the React app — produces apps/web/dist/
+      - name: Build @bank-arch/web
+        run: npm run build --workspace=@bank-arch/web
+  
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: apps/web/dist/
 
   deploy:
     runs-on: ubuntu-latest
