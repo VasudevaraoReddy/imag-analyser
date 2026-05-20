@@ -2,12 +2,10 @@ name: Azure Static Web Apps CI/CD
 
 on:
   push:
-    branches:
-      - image-flow
+    branches: [ image-flow ]
   pull_request:
     types: [opened, synchronize, reopened, closed]
-    branches:
-      - image-flow
+    branches: [ image-flow ]
 
 jobs:
   build_and_deploy_job:
@@ -15,23 +13,41 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
           lfs: false
-      - name: Build And Deploy
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 🔑 Install ALL workspaces from the root. This is what makes
+      # @bank-arch/shared resolvable inside apps/web/.
+      - name: Install monorepo dependencies
+        run: npm install
+
+      # 🔑 Build the shared types package FIRST so apps/web can import them.
+      - name: Build shared package
+        run: npm run build --workspace=@bank-arch/shared
+
+      # 🔑 Build the web app (also runs tsc -b, which now sees the shared package).
+      - name: Build web
+        run: npm run build --workspace=@bank-arch/web
+
+      # Now hand the pre-built dist to SWA and tell it not to rebuild.
+      - name: Deploy to Azure Static Web Apps
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PURPLE_MOSS_07279B200 }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_<KEEP_YOUR_TOKEN_NAME> }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/apps/web" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: "dist" # Built app content directory - optional
-          ###### End of Repository/Build Configurations ######
+          app_location: "apps/web"
+          api_location: ""
+          output_location: "dist"
+          skip_app_build: true            # ← we already built it above
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -42,5 +58,5 @@ jobs:
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PURPLE_MOSS_07279B200 }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_<KEEP_YOUR_TOKEN_NAME> }}
           action: "close"
