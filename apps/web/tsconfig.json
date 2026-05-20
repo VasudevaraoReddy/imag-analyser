@@ -13,7 +13,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
-    "allowImportingTsExtensions": false
+    "allowImportingTsExtensions": false,
+    "types": ["vite/client"]
   },
   "include": ["src"],
   "references": [{ "path": "../../packages/shared" }]

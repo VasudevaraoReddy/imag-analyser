@@ -3,7 +3,11 @@ import { AnalysisResult, AnalysisSummary } from "@bank-arch/shared";
 // Backend URL — baked at build time from VITE_API_BASE env var.
 // In Azure: workflow sets VITE_API_BASE to the BE App Service hostname.
 // Local dev: env var is empty, falls back to "/api" which Vite proxies to localhost:8000.
-const BASE = import.meta.env.VITE_API_BASE || "/api";
+//
+// The `as any` cast keeps the build green even on TS configs that lack
+// Vite's client types — Vite still substitutes the value at build time.
+const BASE: string =
+  (import.meta as any).env?.VITE_API_BASE || "/api";
 
 // Read the cached auth user (set by routes/LoginPage on sign-in) and
 // attach `Authorization: Bearer <token>` to every request. Keeping this
