@@ -11,44 +11,25 @@ jobs:
   build_and_deploy_job:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
-          lfs: false
 
-      - name: Setup Node 20
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      # 1) Install everything from the repo root. npm workspaces will
-      #    symlink @bank-arch/shared into apps/web/node_modules.
-      - name: Install monorepo dependencies
-        run: npm ci || npm install
+      - name: Install
+        run: npm install
 
-      # 2) Build the shared package FIRST. This produces packages/shared/dist
-      #    which apps/web's tsc -b can find via the project reference.
-      - name: Build @bank-arch/shared
-        run: npm run build --workspace=@bank-arch/shared
-
-      # 3) Sanity check — fail fast if shared didn't produce its outputs.
-      - name: Verify shared package output
+      - name: Force-build shared
         run: |
-          ls -la packages/shared/dist
-          test -f packages/shared/dist/index.js || (echo "ERROR: shared dist/ is empty" && exit 1)
-          test -f packages/shared/dist/index.d.ts || (echo "ERROR: shared dist/index.d.ts missing" && exit 1)
+          rm -rf packages/shared/dist packages/shared/tsconfig.tsbuildinfo
+          npx tsc -b packages/shared --force --verbose
 
-      # 4) Build the web app.
-      - name: Build @bank-arch/web
+      - name: Build web
         run: npm run build --workspace=@bank-arch/web
 
-      # 5) Hand the prebuilt dist to SWA. skip_app_build prevents SWA from
-      #    running its own broken single-package build.
-      - name: Deploy to Azure Static Web Apps
-        id: builddeploy
+      - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PURPLE_MOSS_07279B200 }}
@@ -63,11 +44,8 @@ jobs:
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
-    name: Close Pull Request Job
     steps:
-      - name: Close Pull Request
-        id: closepullrequest
-        uses: Azure/static-web-apps-deploy@v1
+      - uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PURPLE_MOSS_07279B200 }}
           action: "close"
