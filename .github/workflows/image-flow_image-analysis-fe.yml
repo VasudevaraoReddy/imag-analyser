@@ -5,35 +5,51 @@ name: Build and deploy Node.js app to Azure Web App - image-analysis-fe
 
 on:
   push:
-    branches:
-      - image-flow
+    branches: [ image-flow ]
+    paths:
+      # Only run when something the frontend actually depends on changes
+      - 'apps/web/**'
+      - 'packages/shared/**'                    # Zod schemas; UI types depend on it
+      - 'package.json'                          # Monorepo root: workspace changes
+      - 'package-lock.json'
+      - '.github/workflows/image-flow_image-analysis-fe.yml'
   workflow_dispatch:
+
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
         with:
-          node-version: '24.x'
+          node-version: '20'
 
-      - name: npm install, build, and test
+      - name: Install monorepo dependencies
+        run: npm install
+
+      - name: Build @bank-arch/shared
         run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+          rm -rf packages/shared/dist packages/shared/tsconfig.tsbuildinfo
+          npx tsc -b packages/shared --force
 
-      - name: Upload artifact for deployment job
+      - name: Build @bank-arch/web
+        env:
+          # Bakes the backend URL into the JS bundle at build time.
+          # Local dev still uses /api via Vite proxy (the api.ts fallback).
+          VITE_API_BASE: 'https://image-analysis-be-ftenc4c2d2ehgye3.southindia-01.azurewebsites.net/'
+        run: npm run build --workspace=@bank-arch/web
+
+      - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: apps/web/dist/
 
   deploy:
     runs-on: ubuntu-latest
