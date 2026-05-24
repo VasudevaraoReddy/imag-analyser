@@ -9,6 +9,7 @@ from ..config import get_settings
 from ..schemas import AnalysisResult, AnalysisSummary
 from ..services.analyzer import analyze_diagram
 from ..services.compliance import load_rules
+from ..services.input_validator import validate as validate_input
 from ..services.normalize import load_taxonomy
 from ..storage import (
     list_summaries,
@@ -42,6 +43,25 @@ async def post_analyze(
             status_code=413,
             detail=f"Upload exceeds {settings.max_upload_mb} MB",
         )
+
+    # ─── Sprint 1: Input Validation Gate ──────────────────────────────
+    # Runs BEFORE the analysis pipeline. Rejects too-small / too-blurred /
+    # not-an-architecture-diagram uploads with a clear, actionable error
+    # so we don't burn $0.02 of LLM budget on garbage.
+    validation = await validate_input(data)
+    if not validation.accepted:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "input_validation_failed",
+                "reason_code": validation.reason_code,
+                "message": validation.message,
+                "category": validation.category,
+                "classifier_confidence": validation.classifier_confidence,
+                "metrics": validation.metrics,
+            },
+        )
+
     try:
         result = await analyze_diagram(
             data,

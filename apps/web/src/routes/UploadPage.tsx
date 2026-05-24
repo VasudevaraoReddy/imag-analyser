@@ -164,12 +164,104 @@ export default function UploadPage() {
         </div>
       )}
 
-      {mutation.isError && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-4 text-sm">
-          <div className="font-semibold mb-1">Analysis failed</div>
-          {(mutation.error as Error).message}
-        </div>
-      )}
+      {mutation.isError && <ErrorPanel error={mutation.error as Error} />}
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Error panel — special-cases 422 input-validation failures with a clean,
+// actionable message instead of dumping JSON. Falls back to generic message
+// for any other error.
+// ---------------------------------------------------------------------------
+
+function ErrorPanel({ error }: { error: Error }) {
+  // The API returns 422 with { detail: { error, reason_code, message, ... } }
+  // for validation rejections. Our jsonFetch wraps it as
+  // "API 422: { ... }" — parse it back.
+  const parsed = tryParseValidationError(error.message);
+  if (parsed) {
+    return (
+      <div className="bg-amber-50 border border-amber-300 text-slate-800 rounded-lg p-5 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="text-2xl leading-none">⚠</div>
+          <div className="flex-1">
+            <div className="font-semibold text-amber-900 mb-1">
+              {humanTitleFor(parsed.reason_code)}
+            </div>
+            <p className="text-sm text-slate-700">{parsed.message}</p>
+          </div>
+        </div>
+
+        {parsed.metrics && Object.keys(parsed.metrics).length > 0 && (
+          <details className="mt-2 text-xs text-slate-500">
+            <summary className="cursor-pointer hover:text-slate-700">
+              Show technical details
+            </summary>
+            <pre className="mt-2 bg-white p-2 rounded font-mono text-[11px] overflow-auto">
+{JSON.stringify(parsed.metrics, null, 2)}
+            </pre>
+          </details>
+        )}
+
+        <div className="text-xs text-slate-600 border-t border-amber-200 pt-2">
+          Architecture diagrams should:
+          <ul className="mt-1 list-disc list-inside space-y-0.5">
+            <li>Show services/VMs/databases as boxes with arrows between them</li>
+            <li>Be at least 800 pixels on the long edge</li>
+            <li>Be sharp — screenshot beats phone photo of a screen</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback for non-validation errors
+  return (
+    <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-4 text-sm">
+      <div className="font-semibold mb-1">Analysis failed</div>
+      {error.message}
+    </div>
+  );
+}
+
+type ValidationDetail = {
+  error: string;
+  reason_code: string;
+  message: string;
+  category?: string;
+  classifier_confidence?: number;
+  metrics?: Record<string, unknown>;
+};
+
+function tryParseValidationError(msg: string): ValidationDetail | null {
+  // jsonFetch raises `API 422: { ... }`; pull the JSON portion.
+  const m = msg.match(/^API 422:\s*(.+)$/s);
+  if (!m) return null;
+  try {
+    const body = JSON.parse(m[1]) as { detail?: ValidationDetail };
+    if (body.detail && body.detail.error === "input_validation_failed") {
+      return body.detail;
+    }
+  } catch {
+    /* fall through */
+  }
+  return null;
+}
+
+function humanTitleFor(code: string): string {
+  switch (code) {
+    case "not_an_image":
+      return "This file isn't a readable image";
+    case "image_too_small":
+      return "Image is too small";
+    case "image_too_large":
+      return "Image is too large";
+    case "image_too_blurred":
+      return "Image is too blurred";
+    case "not_an_architecture_diagram":
+      return "This doesn't look like an architecture diagram";
+    default:
+      return "Upload rejected";
+  }
 }
