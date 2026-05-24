@@ -24,8 +24,17 @@ from ..schemas import (
     TrustZone,
 )
 from ..storage import next_arc_number, save_analysis, save_processed, save_upload
-from . import classifier, compliance, doc_intelligence, image_prep, normalize, tiling
-from . import journey_extractor, vision_llm
+from . import (
+    auto_correct,
+    classifier,
+    compliance,
+    doc_intelligence,
+    image_prep,
+    journey_extractor,
+    normalize,
+    tiling,
+    vision_llm,
+)
 
 from ..logging_setup import get_logger  # noqa: E402
 
@@ -222,6 +231,12 @@ async def analyze_diagram(
     result = normalize.canonicalize_components(result)
     result = normalize.infer_trust_zones_if_missing(result)
     result = normalize.derive_primary_provider(result)
+
+    # Sprint 2a: deterministic auto-correct BEFORE classifier so any
+    # flipped/dropped connections feed into the right N-S/E-W bucket.
+    correction = auto_correct.auto_correct(result)
+    result = correction.result
+
     result = classifier.classify_flows(result)
     findings = compliance.run_all(result)
     result = result.model_copy(update={"compliance_findings": findings})
