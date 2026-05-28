@@ -1,0 +1,1667 @@
+{
+  "diagram_id": "d17552de78db49db99cdb386060d22ac",
+  "arc_number": "ARC-202605-010",
+  "title": "kishore checking",
+  "description": "",
+  "submitted_by": {
+    "employee_id": "ADMIN",
+    "name": "Platform Admin",
+    "role": "Platform Administrator",
+    "email": "platform-admin@yesbank.in"
+  },
+  "submitted_at": "2026-05-28T06:33:20.101083+00:00",
+  "filename": "AWS-Architecture-1-e1632285931271.png",
+  "input_format": "png",
+  "image_dimensions": {
+    "width": 984,
+    "height": 629
+  },
+  "tiles_processed": 1,
+  "cloud_providers": [
+    "aws"
+  ],
+  "primary_provider": "aws",
+  "diagram_style": "official_stencil",
+  "trust_zones": [
+    {
+      "id": "tz-external",
+      "name": "Internet",
+      "kind": "external",
+      "bbox": null,
+      "evidence": null
+    },
+    {
+      "id": "tz-internal",
+      "name": "Region",
+      "kind": "internal",
+      "bbox": [
+        377.0,
+        548.0,
+        669.0,
+        616.0
+      ],
+      "evidence": null
+    }
+  ],
+  "components": [
+    {
+      "id": "c-yourapp",
+      "name": "yourApp.com",
+      "canonical_name": "yourApp.com",
+      "service_type": "unknown",
+      "provider": "other",
+      "trust_zone": "tz-external",
+      "tier": "edge",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          447.0,
+          14.0,
+          512.0,
+          26.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-media",
+      "name": "media.yourApp.com",
+      "canonical_name": "media.yourApp.com",
+      "service_type": "cdn",
+      "provider": "aws",
+      "trust_zone": "tz-external",
+      "tier": "edge",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          693.0,
+          15.0,
+          789.0,
+          26.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-cloudfront",
+      "name": "Amazon CloudFront",
+      "canonical_name": "Amazon CloudFront",
+      "service_type": "cdn",
+      "provider": "aws",
+      "trust_zone": "tz-external",
+      "tier": "edge",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          609.0,
+          89.0,
+          705.0,
+          101.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-elb",
+      "name": "Elastic Load Balancing",
+      "canonical_name": "Elastic Load Balancing",
+      "service_type": "load_balancer",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "web",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          398.0,
+          167.0,
+          455.0,
+          192.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-webserver1",
+      "name": "Web Server",
+      "canonical_name": "Web Server",
+      "service_type": "compute_vm",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "web",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          412.0,
+          316.0,
+          470.0,
+          327.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-webserver2",
+      "name": "Web Server",
+      "canonical_name": "Web Server",
+      "service_type": "compute_vm",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "web",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          498.0,
+          316.0,
+          556.0,
+          327.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-appserver1",
+      "name": "App Server",
+      "canonical_name": "App Server",
+      "service_type": "compute_vm",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "app",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          412.0,
+          432.0,
+          466.0,
+          443.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-appserver2",
+      "name": "App Server",
+      "canonical_name": "App Server",
+      "service_type": "compute_vm",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "app",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          498.0,
+          432.0,
+          552.0,
+          443.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-dynamodb",
+      "name": "Amazon DynamoDB",
+      "canonical_name": "Amazon DynamoDB",
+      "service_type": "database_nosql",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "data",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          134.0,
+          454.0,
+          249.0,
+          467.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-elasticache",
+      "name": "Amazon ElastiCache",
+      "canonical_name": "Amazon ElastiCache",
+      "service_type": "database_cache",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "data",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          377.0,
+          548.0,
+          473.0,
+          560.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-rds-primary",
+      "name": "RDS DB Instance",
+      "canonical_name": "RDS",
+      "service_type": "database_relational",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "data",
+      "redundancy": "multi_az",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          496.0,
+          544.0,
+          577.0,
+          555.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-rds-standby",
+      "name": "RDS DB Instance standby (Multi AZ)",
+      "canonical_name": "RDS",
+      "service_type": "database_relational",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "data",
+      "redundancy": "multi_az",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          601.0,
+          548.0,
+          669.0,
+          568.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-s3",
+      "name": "Bucket",
+      "canonical_name": "Bucket",
+      "service_type": "storage_object",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "data",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          765.0,
+          286.0,
+          800.0,
+          297.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "c-ses",
+      "name": "Amazon SES",
+      "canonical_name": "Amazon SES",
+      "service_type": "unknown",
+      "provider": "aws",
+      "trust_zone": "tz-internal",
+      "tier": "integration",
+      "redundancy": "unknown",
+      "evidence": {
+        "ocr_text": null,
+        "bbox": [
+          156.0,
+          566.0,
+          227.0,
+          578.0
+        ],
+        "icon_hint": null,
+        "confidence": 0.9
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "c-yourapp",
+      "to": "c-elb",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e2",
+      "from": "c-media",
+      "to": "c-cloudfront",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e15",
+      "from": "c-cloudfront",
+      "to": "c-s3",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e3",
+      "from": "c-elb",
+      "to": "c-webserver1",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e4",
+      "from": "c-elb",
+      "to": "c-webserver2",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e5",
+      "from": "c-webserver1",
+      "to": "c-appserver1",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e6",
+      "from": "c-webserver2",
+      "to": "c-appserver2",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e7",
+      "from": "c-appserver1",
+      "to": "c-dynamodb",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e8",
+      "from": "c-appserver2",
+      "to": "c-dynamodb",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e9",
+      "from": "c-appserver1",
+      "to": "c-elasticache",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e10",
+      "from": "c-appserver2",
+      "to": "c-elasticache",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e11",
+      "from": "c-appserver1",
+      "to": "c-rds-primary",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e12",
+      "from": "c-appserver2",
+      "to": "c-rds-primary",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e13",
+      "from": "c-ses",
+      "to": "c-appserver1",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e14",
+      "from": "c-ses",
+      "to": "c-appserver2",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e16",
+      "from": "c-webserver1",
+      "to": "c-s3",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e17",
+      "from": "c-webserver2",
+      "to": "c-s3",
+      "label": null,
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    },
+    {
+      "id": "e18",
+      "from": "c-media",
+      "to": "c-cloudfront",
+      "label": "Static data",
+      "protocol": null,
+      "port": null,
+      "encrypted": true,
+      "bidirectional": false,
+      "is_data_flow": true,
+      "evidence": null
+    }
+  ],
+  "flows": {
+    "north_south": [
+      "e1",
+      "e2",
+      "e15",
+      "e18"
+    ],
+    "east_west": [
+      "e3",
+      "e4",
+      "e5",
+      "e6",
+      "e7",
+      "e8",
+      "e9",
+      "e10",
+      "e11",
+      "e12",
+      "e13",
+      "e14",
+      "e16",
+      "e17"
+    ]
+  },
+  "journeys": [
+    {
+      "id": "j-9",
+      "title": "media.yourApp.com \u2192 Bucket",
+      "kind": "write",
+      "hops": [
+        {
+          "from": "c-media",
+          "to": "c-cloudfront",
+          "from_name": "media.yourApp.com",
+          "to_name": "Amazon CloudFront",
+          "label": "Static data",
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "external",
+          "connection_id": "e18",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-cloudfront",
+          "to": "c-s3",
+          "from_name": "Amazon CloudFront",
+          "to_name": "Bucket",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "internal",
+          "connection_id": "e15",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-media",
+        "c-cloudfront",
+        "c-s3"
+      ],
+      "connection_ids": [
+        "e18",
+        "e15"
+      ],
+      "zones_crossed": [
+        "external",
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": true,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [
+        "WAF_BEFORE_APP"
+      ],
+      "score": 49,
+      "narrative": "media.yourApp.com writes to Bucket crossing external \u2192 internal with TLS at every hop.",
+      "warnings": []
+    },
+    {
+      "id": "j-1",
+      "title": "yourApp.com \u2192 Amazon DynamoDB",
+      "kind": "write",
+      "hops": [
+        {
+          "from": "c-yourapp",
+          "to": "c-elb",
+          "from_name": "yourApp.com",
+          "to_name": "Elastic Load Balancing",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "internal",
+          "connection_id": "e1",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-elb",
+          "to": "c-webserver2",
+          "from_name": "Elastic Load Balancing",
+          "to_name": "Web Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e4",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-webserver2",
+          "to": "c-appserver2",
+          "from_name": "Web Server",
+          "to_name": "App Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e6",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-appserver2",
+          "to": "c-dynamodb",
+          "from_name": "App Server",
+          "to_name": "Amazon DynamoDB",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e8",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-yourapp",
+        "c-elb",
+        "c-webserver2",
+        "c-appserver2",
+        "c-dynamodb"
+      ],
+      "connection_ids": [
+        "e1",
+        "e4",
+        "e6",
+        "e8"
+      ],
+      "zones_crossed": [
+        "external",
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": true,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 48,
+      "narrative": "yourApp.com writes to Amazon DynamoDB crossing external \u2192 internal with TLS at every hop.",
+      "warnings": []
+    },
+    {
+      "id": "j-2",
+      "title": "yourApp.com \u2192 Amazon DynamoDB",
+      "kind": "write",
+      "hops": [
+        {
+          "from": "c-yourapp",
+          "to": "c-elb",
+          "from_name": "yourApp.com",
+          "to_name": "Elastic Load Balancing",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "internal",
+          "connection_id": "e1",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-elb",
+          "to": "c-webserver1",
+          "from_name": "Elastic Load Balancing",
+          "to_name": "Web Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e3",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-webserver1",
+          "to": "c-appserver1",
+          "from_name": "Web Server",
+          "to_name": "App Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e5",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-appserver1",
+          "to": "c-dynamodb",
+          "from_name": "App Server",
+          "to_name": "Amazon DynamoDB",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e7",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-yourapp",
+        "c-elb",
+        "c-webserver1",
+        "c-appserver1",
+        "c-dynamodb"
+      ],
+      "connection_ids": [
+        "e1",
+        "e3",
+        "e5",
+        "e7"
+      ],
+      "zones_crossed": [
+        "external",
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": true,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 48,
+      "narrative": "yourApp.com writes to Amazon DynamoDB crossing external \u2192 internal with TLS at every hop.",
+      "warnings": []
+    },
+    {
+      "id": "j-3",
+      "title": "yourApp.com \u2192 Amazon ElastiCache",
+      "kind": "read",
+      "hops": [
+        {
+          "from": "c-yourapp",
+          "to": "c-elb",
+          "from_name": "yourApp.com",
+          "to_name": "Elastic Load Balancing",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "internal",
+          "connection_id": "e1",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-elb",
+          "to": "c-webserver2",
+          "from_name": "Elastic Load Balancing",
+          "to_name": "Web Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e4",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-webserver2",
+          "to": "c-appserver2",
+          "from_name": "Web Server",
+          "to_name": "App Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e6",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-appserver2",
+          "to": "c-elasticache",
+          "from_name": "App Server",
+          "to_name": "Amazon ElastiCache",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e10",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-yourapp",
+        "c-elb",
+        "c-webserver2",
+        "c-appserver2",
+        "c-elasticache"
+      ],
+      "connection_ids": [
+        "e1",
+        "e4",
+        "e6",
+        "e10"
+      ],
+      "zones_crossed": [
+        "external",
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": true,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 48,
+      "narrative": "yourApp.com reads from Amazon ElastiCache crossing external \u2192 internal with TLS at every hop.",
+      "warnings": []
+    },
+    {
+      "id": "j-4",
+      "title": "yourApp.com \u2192 Amazon ElastiCache",
+      "kind": "read",
+      "hops": [
+        {
+          "from": "c-yourapp",
+          "to": "c-elb",
+          "from_name": "yourApp.com",
+          "to_name": "Elastic Load Balancing",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "internal",
+          "connection_id": "e1",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-elb",
+          "to": "c-webserver1",
+          "from_name": "Elastic Load Balancing",
+          "to_name": "Web Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e3",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-webserver1",
+          "to": "c-appserver1",
+          "from_name": "Web Server",
+          "to_name": "App Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e5",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-appserver1",
+          "to": "c-elasticache",
+          "from_name": "App Server",
+          "to_name": "Amazon ElastiCache",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e9",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-yourapp",
+        "c-elb",
+        "c-webserver1",
+        "c-appserver1",
+        "c-elasticache"
+      ],
+      "connection_ids": [
+        "e1",
+        "e3",
+        "e5",
+        "e9"
+      ],
+      "zones_crossed": [
+        "external",
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": true,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 48,
+      "narrative": "yourApp.com reads from Amazon ElastiCache crossing external \u2192 internal with TLS at every hop.",
+      "warnings": []
+    },
+    {
+      "id": "j-5",
+      "title": "yourApp.com \u2192 RDS DB Instance",
+      "kind": "write",
+      "hops": [
+        {
+          "from": "c-yourapp",
+          "to": "c-elb",
+          "from_name": "yourApp.com",
+          "to_name": "Elastic Load Balancing",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "internal",
+          "connection_id": "e1",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-elb",
+          "to": "c-webserver2",
+          "from_name": "Elastic Load Balancing",
+          "to_name": "Web Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e4",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-webserver2",
+          "to": "c-appserver2",
+          "from_name": "Web Server",
+          "to_name": "App Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e6",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-appserver2",
+          "to": "c-rds-primary",
+          "from_name": "App Server",
+          "to_name": "RDS DB Instance",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e12",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-yourapp",
+        "c-elb",
+        "c-webserver2",
+        "c-appserver2",
+        "c-rds-primary"
+      ],
+      "connection_ids": [
+        "e1",
+        "e4",
+        "e6",
+        "e12"
+      ],
+      "zones_crossed": [
+        "external",
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": true,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 48,
+      "narrative": "yourApp.com writes to RDS DB Instance crossing external \u2192 internal with TLS at every hop.",
+      "warnings": []
+    },
+    {
+      "id": "j-6",
+      "title": "yourApp.com \u2192 RDS DB Instance",
+      "kind": "write",
+      "hops": [
+        {
+          "from": "c-yourapp",
+          "to": "c-elb",
+          "from_name": "yourApp.com",
+          "to_name": "Elastic Load Balancing",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "internal",
+          "connection_id": "e1",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-elb",
+          "to": "c-webserver1",
+          "from_name": "Elastic Load Balancing",
+          "to_name": "Web Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e3",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-webserver1",
+          "to": "c-appserver1",
+          "from_name": "Web Server",
+          "to_name": "App Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e5",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-appserver1",
+          "to": "c-rds-primary",
+          "from_name": "App Server",
+          "to_name": "RDS DB Instance",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e11",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-yourapp",
+        "c-elb",
+        "c-webserver1",
+        "c-appserver1",
+        "c-rds-primary"
+      ],
+      "connection_ids": [
+        "e1",
+        "e3",
+        "e5",
+        "e11"
+      ],
+      "zones_crossed": [
+        "external",
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": true,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 48,
+      "narrative": "yourApp.com writes to RDS DB Instance crossing external \u2192 internal with TLS at every hop.",
+      "warnings": []
+    },
+    {
+      "id": "j-10",
+      "title": "Amazon CloudFront \u2192 Bucket",
+      "kind": "write",
+      "hops": [
+        {
+          "from": "c-cloudfront",
+          "to": "c-s3",
+          "from_name": "Amazon CloudFront",
+          "to_name": "Bucket",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "internal",
+          "connection_id": "e15",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-cloudfront",
+        "c-s3"
+      ],
+      "connection_ids": [
+        "e15"
+      ],
+      "zones_crossed": [
+        "external",
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": true,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [
+        "WAF_BEFORE_APP"
+      ],
+      "score": 47,
+      "narrative": "Amazon CloudFront writes to Bucket crossing external \u2192 internal with TLS at every hop.",
+      "warnings": []
+    },
+    {
+      "id": "j-7",
+      "title": "yourApp.com \u2192 Bucket",
+      "kind": "write",
+      "hops": [
+        {
+          "from": "c-yourapp",
+          "to": "c-elb",
+          "from_name": "yourApp.com",
+          "to_name": "Elastic Load Balancing",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "internal",
+          "connection_id": "e1",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-elb",
+          "to": "c-webserver2",
+          "from_name": "Elastic Load Balancing",
+          "to_name": "Web Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e4",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-webserver2",
+          "to": "c-s3",
+          "from_name": "Web Server",
+          "to_name": "Bucket",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e17",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-yourapp",
+        "c-elb",
+        "c-webserver2",
+        "c-s3"
+      ],
+      "connection_ids": [
+        "e1",
+        "e4",
+        "e17"
+      ],
+      "zones_crossed": [
+        "external",
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": true,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 46,
+      "narrative": "yourApp.com writes to Bucket crossing external \u2192 internal with TLS at every hop.",
+      "warnings": []
+    },
+    {
+      "id": "j-8",
+      "title": "yourApp.com \u2192 Bucket",
+      "kind": "write",
+      "hops": [
+        {
+          "from": "c-yourapp",
+          "to": "c-elb",
+          "from_name": "yourApp.com",
+          "to_name": "Elastic Load Balancing",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "external",
+          "to_zone_kind": "internal",
+          "connection_id": "e1",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-elb",
+          "to": "c-webserver1",
+          "from_name": "Elastic Load Balancing",
+          "to_name": "Web Server",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e3",
+          "direction_inferred": false
+        },
+        {
+          "from": "c-webserver1",
+          "to": "c-s3",
+          "from_name": "Web Server",
+          "to_name": "Bucket",
+          "label": null,
+          "protocol": null,
+          "port": null,
+          "encrypted": true,
+          "from_zone_kind": "internal",
+          "to_zone_kind": "internal",
+          "connection_id": "e16",
+          "direction_inferred": false
+        }
+      ],
+      "component_ids": [
+        "c-yourapp",
+        "c-elb",
+        "c-webserver1",
+        "c-s3"
+      ],
+      "connection_ids": [
+        "e1",
+        "e3",
+        "e16"
+      ],
+      "zones_crossed": [
+        "external",
+        "internal"
+      ],
+      "protocols": [],
+      "is_fully_encrypted": true,
+      "has_unencrypted_hop": false,
+      "enters_restricted": false,
+      "starts_external": true,
+      "related_findings": [],
+      "score": 46,
+      "narrative": "yourApp.com writes to Bucket crossing external \u2192 internal with TLS at every hop.",
+      "warnings": []
+    }
+  ],
+  "critic_review": {
+    "ran": true,
+    "model": "gpt-4o",
+    "duration_ms": 41255,
+    "overall_assessment": "The extraction is mostly accurate with minor issues.",
+    "critique_confidence": 0.95,
+    "findings": [
+      {
+        "id": "f-1",
+        "kind": "missed_component",
+        "status": "pending",
+        "confidence": 0.9,
+        "message": "The 'Instance with CloudWatch' component is missing.",
+        "reason": "The diagram clearly shows an 'Instance with CloudWatch' component on the left side, which is not present in the extracted components.",
+        "suggestion": {
+          "name": "Instance with CloudWatch",
+          "bbox": [
+            50,
+            100,
+            150,
+            150
+          ],
+          "suggested_service_type": "monitoring",
+          "suggested_trust_zone_id": "tz-internal"
+        },
+        "affected_component_ids": [],
+        "affected_connection_ids": [],
+        "affected_journey_ids": [],
+        "decided_at": null,
+        "decided_by_employee_id": null,
+        "decided_by_name": null
+      },
+      {
+        "id": "f-2",
+        "kind": "missed_connection",
+        "status": "pending",
+        "confidence": 0.9,
+        "message": "Connection from 'Instance with CloudWatch' to 'Elastic Load Balancing' is missing.",
+        "reason": "The diagram shows a connection from 'Instance with CloudWatch' to 'Elastic Load Balancing', but it is not present in the extracted connections.",
+        "suggestion": {
+          "from_component_id": "c-cloudwatch",
+          "to_component_id": "c-elb",
+          "protocol": null,
+          "encrypted": true
+        },
+        "affected_component_ids": [],
+        "affected_connection_ids": [],
+        "affected_journey_ids": [],
+        "decided_at": null,
+        "decided_by_employee_id": null,
+        "decided_by_name": null
+      },
+      {
+        "id": "f-3",
+        "kind": "wrong_label",
+        "status": "pending",
+        "confidence": 0.85,
+        "message": "The label for 'Bucket' should be 'Amazon S3 Bucket'.",
+        "reason": "The diagram explicitly labels the component as 'Amazon S3 Bucket', but the extracted label is just 'Bucket'.",
+        "suggestion": {
+          "component_id": "c-s3",
+          "current": "Bucket",
+          "suggested": "Amazon S3 Bucket"
+        },
+        "affected_component_ids": [
+          "c-s3"
+        ],
+        "affected_connection_ids": [],
+        "affected_journey_ids": [],
+        "decided_at": null,
+        "decided_by_employee_id": null,
+        "decided_by_name": null
+      },
+      {
+        "id": "f-4",
+        "kind": "wrong_service_type",
+        "status": "pending",
+        "confidence": 0.9,
+        "message": "The service type for 'Amazon SES' should be 'email_service'.",
+        "reason": "Amazon SES is an email service, but the extracted service type is 'unknown'.",
+        "suggestion": {
+          "component_id": "c-ses",
+          "current": "unknown",
+          "suggested": "email_service"
+        },
+        "affected_component_ids": [
+          "c-ses"
+        ],
+        "affected_connection_ids": [],
+        "affected_journey_ids": [],
+        "decided_at": null,
+        "decided_by_employee_id": null,
+        "decided_by_name": null
+      }
+    ],
+    "summary": {
+      "auto_applied": 0,
+      "pending": 4,
+      "approved": 0,
+      "rejected": 0
+    }
+  },
+  "compliance_findings": [
+    {
+      "rule": "WAF_BEFORE_APP",
+      "status": "fail",
+      "severity": "high",
+      "message": "External traffic terminates on a component that is not an edge guard (WAF / CDN / API gateway / load balancer).",
+      "affected_component_ids": [],
+      "affected_connection_ids": [
+        "e15"
+      ]
+    },
+    {
+      "rule": "NO_PUBLIC_DATA_TIER",
+      "status": "pass",
+      "severity": "info",
+      "message": "No data-tier components are exposed in a public trust zone.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "TLS_ON_EXTERNAL_EDGES",
+      "status": "pass",
+      "severity": "info",
+      "message": "All external edges use encrypted protocols.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "ENCRYPTION_TO_RESTRICTED",
+      "status": "pass",
+      "severity": "info",
+      "message": "All edges into restricted zones are encrypted.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "PRIVATE_ENDPOINTS_FOR_PAAS",
+      "status": "not_applicable",
+      "severity": "info",
+      "message": "No Azure PaaS components detected.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "IDENTITY_PRESENT",
+      "status": "warn",
+      "severity": "medium",
+      "message": "External flows exist but no identity provider is shown.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "LOGGING_PRESENT",
+      "status": "warn",
+      "severity": "low",
+      "message": "No logging, monitoring, or SIEM component shown on the diagram.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    },
+    {
+      "rule": "SECRETS_VAULT_PRESENT",
+      "status": "warn",
+      "severity": "low",
+      "message": "Databases or third-party SaaS present, but no secrets vault is shown.",
+      "affected_component_ids": [],
+      "affected_connection_ids": []
+    }
+  ],
+  "parsing_warnings": [
+    {
+      "kind": "unknown_icon",
+      "message": "Component 'Amazon SES' had service_type 'email_service' which is not in the taxonomy; clamped to 'unknown'.",
+      "affected_ids": [
+        "c-ses"
+      ]
+    },
+    {
+      "kind": "low_confidence_component",
+      "message": "Critic (pending): The 'Instance with CloudWatch' component is missing.",
+      "affected_ids": []
+    },
+    {
+      "kind": "low_confidence_component",
+      "message": "Critic (pending): Connection from 'Instance with CloudWatch' to 'Elastic Load Balancing' is missing.",
+      "affected_ids": []
+    },
+    {
+      "kind": "low_confidence_component",
+      "message": "Critic (pending): The label for 'Bucket' should be 'Amazon S3 Bucket'.",
+      "affected_ids": [
+        "c-s3"
+      ]
+    },
+    {
+      "kind": "low_confidence_component",
+      "message": "Critic (pending): The service type for 'Amazon SES' should be 'email_service'.",
+      "affected_ids": [
+        "c-ses"
+      ]
+    }
+  ],
+  "overall_confidence": 0.95,
+  "review_state": "needs_human_review",
+  "architect_decision": null,
+  "re_review_history": [
+    {
+      "round_no": 1,
+      "status": "accepted",
+      "requested_at": "2026-05-28T06:46:08.279288Z",
+      "requested_by_employee_id": "ADMIN",
+      "requested_by_name": "Platform Admin",
+      "requested_by_role": "Platform Administrator",
+      "feedback": "Static data flow covering s3 and cloudfront  is not covered",
+      "decided_stages": [
+        "vision_llm"
+      ],
+      "router_reason": "Missed static data flow involving s3 and cloudfront.",
+      "deltas": {
+        "components_added": [],
+        "components_removed": [],
+        "connections_added": [
+          "e15"
+        ],
+        "connections_removed": [],
+        "connections_flipped": [],
+        "journeys_before": 6,
+        "journeys_after": 8,
+        "confidence_before": 0.84,
+        "confidence_after": 0.95
+      },
+      "duration_ms": 126678
+    },
+    {
+      "round_no": 2,
+      "status": "accepted",
+      "requested_at": "2026-05-28T07:00:03.682768Z",
+      "requested_by_employee_id": "ADMIN",
+      "requested_by_name": "Platform Admin",
+      "requested_by_role": "Platform Administrator",
+      "feedback": "Webserver accessing static content is s3 is not covered",
+      "decided_stages": [
+        "vision_llm"
+      ],
+      "router_reason": "A structural issue where a webserver accessing S3 is missing.",
+      "deltas": {
+        "components_added": [],
+        "components_removed": [],
+        "connections_added": [
+          "e16",
+          "e17"
+        ],
+        "connections_removed": [],
+        "connections_flipped": [],
+        "journeys_before": 8,
+        "journeys_after": 10,
+        "confidence_before": 0.95,
+        "confidence_after": 0.95
+      },
+      "duration_ms": 126372
+    },
+    {
+      "round_no": 3,
+      "status": "accepted",
+      "requested_at": "2026-05-28T07:13:52.640041Z",
+      "requested_by_employee_id": "ADMIN",
+      "requested_by_name": "Platform Admin",
+      "requested_by_role": "Platform Administrator",
+      "feedback": "Amazon CloudFront \u2192 Bucket\nsee here there should be connection from static data to cloud front, you missed it. update the journey flow according to that",
+      "decided_stages": [
+        "vision_llm"
+      ],
+      "router_reason": "Missed connection from static data to CloudFront in the journey flow.",
+      "deltas": {
+        "components_added": [],
+        "components_removed": [],
+        "connections_added": [
+          "e18"
+        ],
+        "connections_removed": [],
+        "connections_flipped": [],
+        "journeys_before": 10,
+        "journeys_after": 10,
+        "confidence_before": 0.95,
+        "confidence_after": 0.95
+      },
+      "duration_ms": 336940
+    }
+  ],
+  "candidate": null,
+  "processing_ms": {
+    "image_prep": 29,
+    "doc_intelligence": 4581,
+    "vision_llm": 89750,
+    "post_process": 217,
+    "critic": 213,
+    "total": 94790
+  }
+}

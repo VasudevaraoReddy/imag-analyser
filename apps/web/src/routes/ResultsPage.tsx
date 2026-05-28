@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import clsx from "clsx";
-import { Download, FileText, Layers, ChevronLeft, MessageSquare } from "lucide-react";
-import { getAnalysis, processedImageUrl, imageUrl } from "../lib/api";
+import { Download, FileText, Layers, ChevronLeft, MessageSquare, Trash2 } from "lucide-react";
+import { getAnalysis, processedImageUrl, imageUrl, deleteAnalysis, type DeleteReviewResponse } from "../lib/api";
 import { ComponentsTable } from "../components/ComponentsTable";
 import { FlowsTable } from "../components/FlowsTable";
 import { JsonViewer } from "../components/JsonViewer";
@@ -15,6 +15,12 @@ import { SummaryStats } from "../components/Summary";
 import { FlowMatrix } from "../components/FlowMatrix";
 import { ComplianceChecklist } from "../components/ComplianceChecklist";
 import { JourneysPanel } from "../components/JourneysPanel";
+import { CriticReviewTab } from "../components/CriticReviewTab";
+import { ArchitectVerdictPanel } from "../components/ArchitectVerdictPanel";
+import { CandidateDiffCard } from "../components/CandidateDiffCard";
+import { ReReviewHistoryStrip } from "../components/ReReviewHistoryStrip";
+import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
+import { useAuth } from "../lib/auth";
 
 type Tab =
   | "journeys"
@@ -22,11 +28,16 @@ type Tab =
   | "trust_zones"
   | "network_view"   // flow matrix + N-S + E-W rolled into one secondary tab
   | "compliance"
+  | "ai_review"
   | "warnings"
   | "raw";
 
 export default function ResultsPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.is_admin ?? false;
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["analysis", id],
     queryFn: () => getAnalysis(id!),
@@ -39,15 +50,47 @@ export default function ResultsPage() {
   const [variant, setVariant] = useState<"original" | "processed">("processed");
   const [showOverlay, setShowOverlay] = useState(true);
 
+  // Delete dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteResult, setDeleteResult] = useState<DeleteReviewResponse | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function confirmDelete() {
+    if (!id) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await deleteAnalysis(id);
+      setDeleteResult(res);
+      // Navigate away after a short pause so the user sees the success summary
+      setTimeout(() => navigate("/reviews", { replace: true }), 2000);
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   if (isLoading) return <div className="p-6 text-slate-500">Loading analysis…</div>;
   if (error || !data) return <div className="p-6 text-rose-600">Could not load analysis.</div>;
 
-  const tabs: { key: Tab; label: string; count?: number }[] = [
+  const criticPending = (data.critic_review?.findings ?? []).filter(
+    (f) => f.status === "pending",
+  ).length;
+  const criticTotal = data.critic_review?.findings.length ?? 0;
+  const tabs: { key: Tab; label: string; count?: number; pulse?: boolean }[] = [
     { key: "journeys", label: "Journeys", count: data.journeys?.length ?? 0 },
     { key: "components", label: "Components", count: data.components.length },
     { key: "trust_zones", label: "Trust zones", count: data.trust_zones.length },
     { key: "network_view", label: "Network view" },
     { key: "compliance", label: "Compliance", count: data.compliance_findings.length },
+    {
+      key: "ai_review",
+      label: "AI Self-Review",
+      count: criticTotal,
+      pulse: criticPending > 0,
+    },
     { key: "warnings", label: "Warnings", count: data.parsing_warnings.length },
     { key: "raw", label: "Raw JSON" },
   ];
@@ -83,6 +126,20 @@ export default function ResultsPage() {
           <button onClick={exportJson} className="btn-secondary">
             <Download className="w-4 h-4" /> JSON
           </button>
+          {isAdmin && (
+            <button
+              onClick={() => {
+                setDeleteResult(null);
+                setDeleteError(null);
+                setShowDeleteDialog(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-rose-200 text-rose-600 bg-white hover:bg-rose-50 transition-colors"
+              title="Permanently delete this analysis"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
@@ -129,9 +186,50 @@ export default function ResultsPage() {
             </span>
             <ConfidenceBadge value={data.overall_confidence} />
             <ReviewStatePill state={data.review_state} />
+            {data.architect_decision && (
+              <span
+                className={clsx(
+                  "pill ring-1",
+                  data.architect_decision.status === "approved"
+                    ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                    : "bg-rose-50 text-rose-700 ring-rose-200",
+                )}
+                title={`Architect ${data.architect_decision.status} on ${new Date(data.architect_decision.decided_at).toLocaleString()}`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                Architect {data.architect_decision.status}
+              </span>
+            )}
+            {data.critic_review?.ran && (
+              <button
+                type="button"
+                onClick={() => setTab("ai_review")}
+                className={clsx(
+                  "pill ring-1 cursor-pointer transition-colors",
+                  criticPending > 0
+                    ? "bg-amber-50 text-amber-800 ring-amber-200 hover:bg-amber-100"
+                    : "bg-emerald-50 text-emerald-700 ring-emerald-200 hover:bg-emerald-100",
+                )}
+                title="AI Self-Critique ran a second pass on this extraction"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                {criticPending > 0
+                  ? `AI flagged ${criticPending} for review`
+                  : "AI-validated"}
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Staged re-extraction (only when architect has requested a re-review) */}
+      {data.candidate && <CandidateDiffCard result={data} />}
+
+      {/* Architect's final verdict (training signal) */}
+      <ArchitectVerdictPanel result={data} />
+
+      {/* Past re-review rounds */}
+      <ReReviewHistoryStrip result={data} />
 
       {/* Stats */}
       <SummaryStats result={data} />
@@ -223,7 +321,11 @@ export default function ResultsPage() {
                 {typeof t.count === "number" && (
                   <span className={clsx(
                     "px-1.5 rounded text-xs",
-                    tab === t.key ? "bg-brand-50 text-brand-700" : "bg-slate-100 text-slate-500",
+                    t.pulse
+                      ? "bg-amber-100 text-amber-800 ring-1 ring-amber-200"
+                      : tab === t.key
+                        ? "bg-brand-50 text-brand-700"
+                        : "bg-slate-100 text-slate-500",
                   )}>{t.count}</span>
                 )}
               </button>
@@ -303,6 +405,7 @@ export default function ResultsPage() {
                 <ComplianceChecklist result={data} compact />
               </div>
             )}
+            {tab === "ai_review" && <CriticReviewTab result={data} />}
             {tab === "warnings" && (
               <div className="space-y-2 p-3">
                 {data.parsing_warnings.length === 0 ? (
@@ -319,6 +422,26 @@ export default function ResultsPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete confirmation dialog (admin only) */}
+      {isAdmin && (
+        <DeleteConfirmDialog
+          open={showDeleteDialog}
+          onClose={() => {
+            if (!isDeleting && !deleteResult) setShowDeleteDialog(false);
+            else if (deleteResult) {
+              setShowDeleteDialog(false);
+              navigate("/reviews", { replace: true });
+            }
+          }}
+          onConfirm={confirmDelete}
+          arcNumber={data.arc_number}
+          title={data.title || data.filename}
+          isDeleting={isDeleting}
+          result={deleteResult}
+          error={deleteError}
+        />
+      )}
     </div>
   );
 }

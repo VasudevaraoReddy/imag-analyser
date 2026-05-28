@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
@@ -163,11 +163,155 @@ class Journey(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+CriticFindingKind = Literal[
+    "missed_component",
+    "spurious_component",
+    "wrong_label",
+    "wrong_service_type",
+    "reversed_flow",
+    "missed_connection",
+    "questionable_journey",
+]
+
+CriticStatus = Literal[
+    "auto_applied",   # confidence above threshold, deterministic merge done
+    "pending",        # awaiting architect's accept/reject
+    "approved",       # architect clicked Approve
+    "rejected",       # architect clicked Reject
+]
+
+
+class CriticFinding(BaseModel):
+    """One issue flagged by the AI self-critique pass.
+
+    Either auto-applied (high confidence) or surfaced as `pending` for the
+    architect to Approve / Reject in the AI Self-Review tab.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    id: str                                # stable id like "f-1"
+    kind: CriticFindingKind
+    status: CriticStatus = "pending"
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    message: str
+    reason: str = ""                       # the critic's justification
+    # Free-form payload describing the suggestion. Shape depends on `kind`:
+    #   missed_component  → {name, bbox, suggested_service_type, suggested_zone}
+    #   wrong_label       → {component_id, current, suggested}
+    #   reversed_flow     → {connection_id}
+    #   spurious_component→ {component_id}
+    suggestion: dict[str, Any] = Field(default_factory=dict)  # type: ignore[type-arg]
+    affected_component_ids: list[str] = Field(default_factory=list)
+    affected_connection_ids: list[str] = Field(default_factory=list)
+    affected_journey_ids: list[str] = Field(default_factory=list)
+    # Audit fields — populated when an architect accepts or rejects.
+    decided_at: str | None = None          # ISO timestamp
+    decided_by_employee_id: str | None = None
+    decided_by_name: str | None = None
+
+
+class CriticReview(BaseModel):
+    """Aggregate result of the AI Self-Critique pass."""
+    model_config = ConfigDict(extra="ignore")
+
+    ran: bool = False
+    model: str | None = None
+    duration_ms: int = 0
+    overall_assessment: str = ""
+    critique_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    findings: list[CriticFinding] = Field(default_factory=list)
+    summary: dict[str, int] = Field(default_factory=dict)
+    # ^ summary["auto_applied"], summary["pending"], summary["approved"], etc.
+
+
+class ArchitectDecision(BaseModel):
+    """The architect's overall verdict on an entire analysis.
+
+    Separate from the auto-computed ``review_state`` (which is a heuristic
+    based on confidence + critical findings). This one is the *human's*
+    final call — and every Approve / Reject is appended to the feedback
+    ledger to seed the future fine-tune.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    status: Literal["approved", "rejected"]
+    decided_at: str                            # ISO timestamp
+    decided_by_employee_id: str = ""
+    decided_by_name: str = ""
+    decided_by_role: str = ""
+    comment: str = ""                          # optional architect note
+
+
+ReReviewStage = Literal["doc_intelligence", "vision_llm"]
+
+
+class ReReviewRound(BaseModel):
+    """One past round of architect-driven re-extraction.
+
+    Lives on ``AnalysisResult.re_review_history`` once a candidate has been
+    Accepted or Discarded — gives the UI a chronological audit trail.
+    The full new extraction is NOT inlined here (it's already either live
+    on the result or thrown away); we keep just the metadata + deltas.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    round_no: int                                  # 1, 2, 3, …
+    status: Literal["accepted", "discarded"]
+    requested_at: str
+    requested_by_employee_id: str = ""
+    requested_by_name: str = ""
+    requested_by_role: str = ""
+    feedback: str
+    decided_stages: list[ReReviewStage] = Field(default_factory=list)
+    router_reason: str = ""
+    deltas: dict[str, Any] = Field(default_factory=dict)  # components_added, etc.
+    duration_ms: int = 0
+
+
+class CandidateExtraction(BaseModel):
+    """A staged re-extraction awaiting architect Accept/Discard.
+
+    Lives on ``AnalysisResult.candidate``. Mirrors the swappable subset of
+    AnalysisResult fields (everything the re-run can change). When the
+    architect Accepts, we copy these fields onto the parent and clear
+    ``candidate``. On Discard, we just clear ``candidate``.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    # — metadata —
+    round_no: int
+    requested_at: str
+    requested_by_employee_id: str = ""
+    requested_by_name: str = ""
+    requested_by_role: str = ""
+    feedback: str
+    decided_stages: list[ReReviewStage] = Field(default_factory=list)
+    router_reason: str = ""
+    duration_ms: int = 0
+    deltas: dict[str, Any] = Field(default_factory=dict)
+
+    # — the new extraction (subset of AnalysisResult fields that may change) —
+    cloud_providers: list[Provider] = Field(default_factory=list)
+    primary_provider: PrimaryProvider = "unknown"
+    diagram_style: DiagramStyle = "unknown"
+    trust_zones: list[TrustZone] = Field(default_factory=list)
+    components: list[Component] = Field(default_factory=list)
+    connections: list[Connection] = Field(default_factory=list)
+    flows: Flows = Field(default_factory=Flows)
+    journeys: list[Journey] = Field(default_factory=list)
+    compliance_findings: list[ComplianceFinding] = Field(default_factory=list)
+    parsing_warnings: list[ParsingWarning] = Field(default_factory=list)
+    critic_review: CriticReview = Field(default_factory=lambda: CriticReview())
+    overall_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    review_state: ReviewState = "needs_human_review"
+
+
 class ProcessingMs(BaseModel):
     image_prep: int = 0
     doc_intelligence: int = 0
     vision_llm: int = 0
     post_process: int = 0
+    critic: int = 0
     total: int = 0
 
 
@@ -204,10 +348,14 @@ class AnalysisResult(BaseModel):
     connections: list[Connection] = Field(default_factory=list)
     flows: Flows = Field(default_factory=Flows)
     journeys: list[Journey] = Field(default_factory=list)
+    critic_review: CriticReview = Field(default_factory=lambda: CriticReview())
     compliance_findings: list[ComplianceFinding] = Field(default_factory=list)
     parsing_warnings: list[ParsingWarning] = Field(default_factory=list)
     overall_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     review_state: ReviewState = "needs_human_review"
+    architect_decision: ArchitectDecision | None = None
+    re_review_history: list[ReReviewRound] = Field(default_factory=list)
+    candidate: CandidateExtraction | None = None
     processing_ms: ProcessingMs = Field(default_factory=ProcessingMs)
 
     def to_json_dict(self) -> dict:  # type: ignore[type-arg]
@@ -226,6 +374,7 @@ class AnalysisSummary(BaseModel):
     components_count: int
     overall_confidence: float
     review_state: ReviewState
+    architect_decision_status: Literal["approved", "rejected", "pending"] = "pending"
 
 
 # LLM extraction output (subset of AnalysisResult that the LLM is allowed

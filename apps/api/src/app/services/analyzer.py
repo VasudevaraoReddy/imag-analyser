@@ -23,11 +23,18 @@ from ..schemas import (
     Submitter,
     TrustZone,
 )
-from ..storage import next_arc_number, save_analysis, save_processed, save_upload
+from ..storage import (
+    next_arc_number,
+    save_analysis,
+    save_ocr,
+    save_processed,
+    save_upload,
+)
 from . import (
     auto_correct,
     classifier,
     compliance,
+    critic,
     doc_intelligence,
     image_prep,
     journey_extractor,
@@ -64,14 +71,20 @@ async def _extract_from_page(
     ocr_client,  # noqa: ANN001
     llm_client,  # noqa: ANN001
     timings: dict[str, int],
-) -> LLMExtraction:
-    """Tile the page, run OCR + LLM per tile, merge."""
+) -> tuple[LLMExtraction, list[dict]]:  # type: ignore[type-arg]
+    """Tile the page, run OCR + LLM per tile, merge.
+
+    Returns the merged extraction AND the merged OCR-line dicts (so the
+    analyzer can persist them for re-runs).
+    """
     tiles = tiling.split_if_needed(page.png_bytes)
     extractions: list[LLMExtraction] = []
+    page_ocr_lines: list[dict] = []  # type: ignore[type-arg]
     for tile in tiles:
         t0 = time.perf_counter()
         ocr = await ocr_client.extract(tile.png_bytes)
         timings["doc_intelligence"] += int((time.perf_counter() - t0) * 1000)
+        page_ocr_lines.extend(ocr.to_prompt_payload())
 
         t1 = time.perf_counter()
         ex = await llm_client.extract(tile.png_bytes, ocr, tile.width, tile.height)
@@ -79,7 +92,7 @@ async def _extract_from_page(
 
         ex = tiling.offset_extraction(ex, tile)
         extractions.append(ex)
-    return tiling.merge(extractions)
+    return tiling.merge(extractions), page_ocr_lines
 
 
 def _build_result(
@@ -178,6 +191,7 @@ async def analyze_diagram(
         "doc_intelligence": 0,
         "vision_llm": 0,
         "post_process": 0,
+        "critic": 0,
     }
 
     t0 = time.perf_counter()
@@ -193,12 +207,22 @@ async def analyze_diagram(
     llm_client = vision_llm.get_client()
 
     page_extractions: list[LLMExtraction] = []
+    page1_ocr_lines: list[dict] = []  # type: ignore[type-arg]
     total_tiles = 0
-    for page in pages:
+    for page_idx, page in enumerate(pages):
         tiles = tiling.split_if_needed(page.png_bytes)
         total_tiles += len(tiles)
-        ex = await _extract_from_page(page, ocr_client, llm_client, timings)
+        ex, ocr_lines = await _extract_from_page(
+            page, ocr_client, llm_client, timings,
+        )
+        if page_idx == 0:
+            page1_ocr_lines = ocr_lines
         page_extractions.append(ex)
+
+    # Re-review only ever runs against page 1's processed.png, so we only
+    # need to persist the page-1 OCR. Cheap (a few KB) but saves an OCR
+    # round-trip on every re-review that doesn't need text re-extraction.
+    save_ocr(diagram_id, page1_ocr_lines)
 
     merged = _merge_pages(page_extractions)
 
@@ -244,6 +268,35 @@ async def analyze_diagram(
     # reference the rule ids that touched its components/connections.
     journeys = journey_extractor.extract_journeys(result)
     result = result.model_copy(update={"journeys": journeys})
+
+    # Sprint 2b: AI Self-Critique. Runs AFTER everything else so the critic
+    # gets to look at the FINAL extraction (incl. journeys/compliance) and
+    # flag anything fishy. Auto-applied fixes update components/connections
+    # and then we re-run downstream deterministic steps below.
+    t_crit = time.perf_counter()
+    try:
+        result, critic_review = await critic.critique(pages[0].png_bytes, result)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("critic.uncaught", error=str(exc))
+        from ..schemas import CriticReview
+        critic_review = CriticReview(
+            ran=True,
+            overall_assessment=f"Critic crashed: {exc}",
+        )
+    timings["critic"] = int((time.perf_counter() - t_crit) * 1000)
+    result = result.model_copy(update={"critic_review": critic_review})
+
+    # If the critic auto-applied component/connection changes, recompute the
+    # downstream deterministic artefacts so the JSON we save is consistent.
+    if critic_review.summary.get("auto_applied", 0) > 0:
+        result = classifier.classify_flows(result)
+        result = result.model_copy(update={
+            "compliance_findings": compliance.run_all(result),
+        })
+        result = result.model_copy(update={
+            "journeys": journey_extractor.extract_journeys(result),
+        })
+
     confidence = _compute_confidence(result)
     result = result.model_copy(update={"overall_confidence": confidence})
     review = _compute_review_state(result)

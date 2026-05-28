@@ -1,4 +1,5 @@
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, UserRound } from "lucide-react";
 import UploadPage from "./routes/UploadPage";
 import ResultsPage from "./routes/ResultsPage";
@@ -8,6 +9,7 @@ import ChatPage from "./routes/ChatPage";
 import LoginPage from "./routes/LoginPage";
 import LogsPage from "./routes/LogsPage";
 import UsagePage from "./routes/UsagePage";
+import TrainingDataPage from "./routes/TrainingDataPage";
 import { Sidebar } from "./components/Sidebar";
 import { clearAuth, useAuth } from "./lib/auth";
 import { YES_BANK_BLUE, YES_BANK_RED, YES_BANK_LOGO } from "./lib/brand";
@@ -15,6 +17,23 @@ import { YES_BANK_BLUE, YES_BANK_RED, YES_BANK_LOGO } from "./lib/brand";
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // When any API call detects an expired token it dispatches this event.
+  // We force-navigate to /login so the user lands on the sign-in screen
+  // (with the "session expired" banner) instead of staring at a broken
+  // page that keeps firing 401s in the background.
+  useEffect(() => {
+    const onExpired = () => {
+      navigate("/login", {
+        replace: true,
+        state: { from: location.pathname + location.search, expired: true },
+      });
+    };
+    window.addEventListener("bank-arch:session-expired", onExpired);
+    return () => window.removeEventListener("bank-arch:session-expired", onExpired);
+  }, [navigate, location.pathname, location.search]);
+
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
@@ -113,6 +132,7 @@ export default function App() {
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/admin/logs" element={<LogsPage />} />
               <Route path="/admin/usage" element={<UsagePage />} />
+              <Route path="/admin/training-data" element={<TrainingDataPage />} />
             </Routes>
           </main>
         </div>

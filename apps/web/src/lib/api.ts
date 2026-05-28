@@ -1,4 +1,5 @@
 import { AnalysisResult, AnalysisSummary } from "@bank-arch/shared";
+import { clearAuth, markSessionExpired } from "./auth";
 
 // Backend URL — baked at build time from VITE_API_BASE env var.
 // In Azure: workflow sets VITE_API_BASE to the BE App Service hostname.
@@ -23,6 +24,13 @@ function authHeader(): Record<string, string> {
   }
 }
 
+/** True for endpoints where a 401 means "bad credentials", NOT "session
+ *  expired" — we should NOT force-logout on these. */
+function isLoginRequest(input: RequestInfo): boolean {
+  const url = typeof input === "string" ? input : (input as Request).url;
+  return /\/auth\/login(\?|$)/.test(url);
+}
+
 async function jsonFetch<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     ...(authHeader()),
@@ -36,11 +44,39 @@ async function jsonFetch<T>(input: RequestInfo, init?: RequestInit): Promise<T> 
     } catch {
       detail = await res.text();
     }
+    // ─── Force-logout on 401 from any non-login endpoint ──────────────
+    if (res.status === 401 && !isLoginRequest(input)) {
+      const reason = readAuthFailureReason(detail);
+      if (reason === "session_expired") {
+        markSessionExpired();
+      } else {
+        // Token revoked / never valid / server restart. Treat as logout
+        // too — there's nothing the user can do but sign in again.
+        clearAuth();
+      }
+    }
     throw new Error(
       `API ${res.status}: ${typeof detail === "string" ? detail : JSON.stringify(detail)}`,
     );
   }
   return (await res.json()) as T;
+}
+
+/** Pull the structured ``error`` discriminator out of a 401 response body.
+ *  Server shape: ``{ detail: { error: "session_expired" | "not_authenticated", message: "…" } }``
+ *  or (legacy) ``{ detail: "Not authenticated" }``. */
+function readAuthFailureReason(
+  detail: unknown,
+): "session_expired" | "not_authenticated" | "unknown" {
+  if (detail && typeof detail === "object" && "detail" in detail) {
+    const inner = (detail as { detail: unknown }).detail;
+    if (inner && typeof inner === "object" && "error" in inner) {
+      const e = (inner as { error: unknown }).error;
+      if (e === "session_expired") return "session_expired";
+      if (e === "not_authenticated") return "not_authenticated";
+    }
+  }
+  return "unknown";
 }
 
 export async function uploadDiagram(
@@ -215,6 +251,72 @@ export async function login(
   });
 }
 
+// ---------------------------------------------------------------------------
+// AI Self-Review — architect decisions on critic findings (Sprint 3)
+// ---------------------------------------------------------------------------
+
+export async function submitCriticDecision(
+  diagramId: string,
+  findingId: string,
+  decision: "approved" | "rejected",
+): Promise<AnalysisResult> {
+  return jsonFetch<AnalysisResult>(`${BASE}/analyses/${diagramId}/decision`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ finding_id: findingId, decision }),
+  });
+}
+
+/** Architect-driven re-extraction. Long-running (~30–90s in prod) —
+ *  the response carries the staged candidate which the architect
+ *  then accepts or discards. */
+export async function requestReReview(
+  diagramId: string,
+  feedback: string,
+): Promise<AnalysisResult> {
+  return jsonFetch<AnalysisResult>(`${BASE}/analyses/${diagramId}/re-review`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ feedback }),
+  });
+}
+
+export async function acceptReReviewCandidate(
+  diagramId: string,
+): Promise<AnalysisResult> {
+  return jsonFetch<AnalysisResult>(
+    `${BASE}/analyses/${diagramId}/re-review/accept`,
+    { method: "POST" },
+  );
+}
+
+export async function discardReReviewCandidate(
+  diagramId: string,
+): Promise<AnalysisResult> {
+  return jsonFetch<AnalysisResult>(
+    `${BASE}/analyses/${diagramId}/re-review/discard`,
+    { method: "POST" },
+  );
+}
+
+/** Architect's overall Approve / Reject verdict on the whole review.
+ *  Persists on the analysis JSON and writes a full training-snapshot
+ *  row to data/feedback/reviews-YYYY-MM.jsonl on the server. */
+export async function submitReviewDecision(
+  diagramId: string,
+  decision: "approved" | "rejected",
+  comment: string,
+): Promise<AnalysisResult> {
+  return jsonFetch<AnalysisResult>(
+    `${BASE}/analyses/${diagramId}/review-decision`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision, comment }),
+    },
+  );
+}
+
 export async function sendChat(
   messages: ChatMessage[],
   analysisId: string | null,
@@ -240,12 +342,22 @@ export async function streamChat(
 ): Promise<void> {
   const res = await fetch(`${BASE}/chat/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify({ messages, analysis_id: analysisId }),
     signal,
   });
   if (!res.ok || !res.body) {
     const text = await res.text().catch(() => "");
+    if (res.status === 401) {
+      // Same force-logout policy as jsonFetch.
+      let parsed: unknown = text;
+      try { parsed = JSON.parse(text); } catch { /* keep raw */ }
+      if (readAuthFailureReason(parsed) === "session_expired") {
+        markSessionExpired();
+      } else {
+        clearAuth();
+      }
+    }
     throw new Error(`API ${res.status}: ${text || res.statusText}`);
   }
 
@@ -284,4 +396,177 @@ export async function streamChat(
       }
     }
   }
+}
+
+
+// ---------------------------------------------------------------------------
+// Admin · Training-data dashboard
+// ---------------------------------------------------------------------------
+
+export type TrainingDataSummary = {
+  totals: {
+    analyses: number;
+    reviews_approved: number;
+    reviews_rejected: number;
+    reviews_pending: number;
+    critic_findings_total: number;
+    critic_findings_auto_applied: number;
+    critic_findings_architect_approved: number;
+    critic_findings_architect_rejected: number;
+    re_review_rounds: number;
+    re_review_accepted: number;
+    re_review_discarded: number;
+  };
+  ledgers: {
+    per_finding: { files: LedgerFile[]; total_bytes: number; total_rows: number };
+    whole_review: { files: LedgerFile[]; total_bytes: number; total_rows: number };
+  };
+  capture_schema: {
+    per_finding_event: string[];
+    whole_review_event: string[];
+  };
+  data_dir: string;
+};
+
+export type LedgerFile = {
+  name: string;
+  size_bytes: number;
+  rows: number;
+  modified_at: string;
+};
+
+export type ApprovedReviewRow = {
+  diagram_id: string;
+  arc_number: string;
+  title: string;
+  filename: string;
+  components: number;
+  connections: number;
+  journeys: number;
+  primary_provider: string;
+  confidence: number;
+  review_state: string;
+  submitted_at: string;
+  decision: {
+    status: "approved" | "rejected";
+    decided_at: string | null;
+    decided_by_employee_id: string;
+    decided_by_name: string;
+    decided_by_role: string;
+    comment: string;
+  };
+  re_review_rounds: number;
+};
+
+export type TrainingEvent = {
+  type: "finding_decision" | "review_decision";
+  timestamp: string;
+  diagram_id: string;
+  arc_number?: string;
+  decision: string;
+  // finding_decision fields
+  finding_id?: string;
+  kind?: string;
+  confidence?: number;
+  message?: string;
+  // review_decision fields
+  comment?: string;
+  decided_by_employee_id?: string;
+  decided_by_name?: string;
+  decided_by_role?: string;
+  snapshot_components?: number;
+  snapshot_connections?: number;
+};
+
+export async function getTrainingDataSummary(): Promise<TrainingDataSummary> {
+  return jsonFetch<TrainingDataSummary>(
+    `${BASE}/admin/training-data/summary`,
+  );
+}
+
+export async function listApprovedReviews(
+  decision: "approved" | "rejected" | "all" = "approved",
+): Promise<{ items: ApprovedReviewRow[]; total: number }> {
+  return jsonFetch(
+    `${BASE}/admin/training-data/approved-reviews?decision=${decision}`,
+  );
+}
+
+export async function listRecentTrainingEvents(
+  limit = 50,
+): Promise<{ items: TrainingEvent[]; total: number }> {
+  return jsonFetch(
+    `${BASE}/admin/training-data/recent-events?limit=${limit}`,
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// Admin · Raw ledger viewer
+// ---------------------------------------------------------------------------
+
+export type LedgerRowsResponse = {
+  name: string;
+  size_bytes: number;
+  total_rows: number;
+  items: Record<string, unknown>[];
+  limit: number;
+  offset: number;
+  order: "asc" | "desc";
+  include_snapshot: boolean;
+};
+
+export async function getLedgerRows(
+  name: string,
+  opts: { limit?: number; offset?: number; includeSnapshot?: boolean } = {},
+): Promise<LedgerRowsResponse> {
+  const qs = new URLSearchParams();
+  qs.set("limit", String(opts.limit ?? 50));
+  qs.set("offset", String(opts.offset ?? 0));
+  qs.set("include_snapshot", String(opts.includeSnapshot ?? false));
+  return jsonFetch<LedgerRowsResponse>(
+    `${BASE}/admin/training-data/ledger/${name}?${qs.toString()}`,
+  );
+}
+
+/** Returns the absolute URL for the raw .jsonl download. The browser
+ *  will follow this with the same Bearer token via a normal anchor +
+ *  fetch dance. We use authedDownloadUrl below so the token is sent. */
+export function ledgerDownloadUrl(name: string): string {
+  return `${BASE}/admin/training-data/ledger/${name}/download`;
+}
+
+/** Trigger an auth'd file download from the browser. Anchor downloads
+ *  can't carry an Authorization header, so we fetch the file as a Blob
+ *  and synthesise a download link. */
+export async function downloadLedger(name: string): Promise<void> {
+  const res = await fetch(ledgerDownloadUrl(name), { headers: authHeader() });
+  if (!res.ok) throw new Error(`Download failed (${res.status})`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+
+// ---------------------------------------------------------------------------
+// Admin · Delete review (hard-delete an analysis + every artifact)
+// ---------------------------------------------------------------------------
+
+export type DeleteReviewResponse = {
+  diagram_id: string;
+  arc_number?: string;
+  artifacts: Record<string, boolean>;
+  ledger_rows_purged: { per_finding: number; whole_review: number };
+};
+
+export async function deleteAnalysis(diagramId: string): Promise<DeleteReviewResponse> {
+  return jsonFetch<DeleteReviewResponse>(`${BASE}/analyses/${diagramId}`, {
+    method: "DELETE",
+  });
 }

@@ -41,6 +41,7 @@ def list_summaries() -> list[AnalysisSummary]:
     out: list[AnalysisSummary] = []
     for a in iter_analyses():
         submitter = getattr(a, "submitted_by", None)
+        decision = getattr(a, "architect_decision", None)
         out.append(
             AnalysisSummary(
                 diagram_id=a.diagram_id,
@@ -54,6 +55,7 @@ def list_summaries() -> list[AnalysisSummary]:
                 components_count=len(a.components),
                 overall_confidence=a.overall_confidence,
                 review_state=a.review_state,
+                architect_decision_status=(decision.status if decision else "pending"),
             )
         )
     out.sort(key=lambda s: s.submitted_at, reverse=True)
@@ -120,3 +122,56 @@ def upload_path(diagram_id: str) -> Path | None:
 def processed_path(diagram_id: str) -> Path | None:
     p = get_settings().uploads_dir / f"{diagram_id}.processed.png"
     return p if p.exists() else None
+
+
+def save_ocr(diagram_id: str, ocr_lines: list[dict]) -> Path:  # type: ignore[type-arg]
+    """Persist the OCR output so re-reviews can skip Document Intelligence
+    when the router decides the issue is purely visual."""
+    p = get_settings().uploads_dir / f"{diagram_id}.ocr.json"
+    p.write_text(json.dumps({"lines": ocr_lines}, indent=2), encoding="utf-8")
+    return p
+
+
+def load_ocr(diagram_id: str) -> list[dict] | None:  # type: ignore[type-arg]
+    p = get_settings().uploads_dir / f"{diagram_id}.ocr.json"
+    if not p.exists():
+        return None
+    try:
+        raw = json.loads(p.read_text(encoding="utf-8"))
+        return list(raw.get("lines") or [])
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def delete_analysis_artifacts(diagram_id: str) -> dict:  # type: ignore[type-arg]
+    """Hard-delete every disk artifact for one analysis.
+
+    Returns a per-file map of ``{path: removed_bool}`` so the API can
+    report exactly what was cleaned up. Missing files are reported as
+    ``False`` (not an error — the caller checks the analysis JSON's
+    existence separately to decide 404 vs 200).
+    """
+    settings = get_settings()
+    removed: dict[str, bool] = {}
+
+    # 1) Analysis JSON
+    p = _path_for(diagram_id)
+    if p.exists():
+        try:
+            p.unlink()
+            removed[str(p)] = True
+        except OSError:
+            removed[str(p)] = False
+    else:
+        removed[str(p)] = False
+
+    # 2) Original upload (extension varies — find by prefix)
+    uploads = settings.uploads_dir
+    for child in uploads.glob(f"{diagram_id}.*"):
+        try:
+            child.unlink()
+            removed[str(child)] = True
+        except OSError:
+            removed[str(child)] = False
+
+    return removed

@@ -19,7 +19,9 @@ import secrets
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+
+TokenStatus = Literal["valid", "expired", "missing", "invalid"]
 
 USERS_FILE = Path(__file__).resolve().parent.parent / "policies" / "users.json"
 
@@ -89,15 +91,37 @@ def issue_token(user: dict[str, Any]) -> str:
 
 def user_for_token(token: str) -> dict[str, Any] | None:
     """Return the public user record for a token, or None if expired/invalid."""
+    user, _status = resolve_token(token)
+    return user
+
+
+def resolve_token(token: str) -> tuple[dict[str, Any] | None, TokenStatus]:
+    """Look up a token and report *why* it failed.
+
+    Returns ``(user, "valid")`` on success, otherwise ``(None, reason)``
+    where ``reason`` is one of:
+      - ``"missing"``  — no token in the header
+      - ``"invalid"``  — token present but never issued (revoked, typo, restart)
+      - ``"expired"``  — token was valid but past its TTL
+    The frontend uses the reason to show "Your session expired" vs
+    "Please sign in" and to force a logout on expiry.
+    """
     if not token:
-        return None
+        return None, "missing"
     entry = _TOKEN_STORE.get(token)
     if entry is None:
-        return None
+        return None, "invalid"
     if time.time() - entry["issued_at"] > _TOKEN_TTL_SECONDS:
-        _TOKEN_STORE.pop(token, None)
-        return None
-    return entry["user"]
+        # NOTE: we deliberately do NOT pop the entry here. Multiple
+        # callers may resolve the same token in one request (e.g. the
+        # HTTP-logging middleware AND a `Depends(current_user)` guard).
+        # If the first call removed the entry, the second would see
+        # "invalid" instead of "expired" and we'd lose the signal that
+        # tells the frontend to show the "session expired" banner.
+        # Stale entries get cleaned up the next time someone re-logs in
+        # — and the in-memory store dies on process restart anyway.
+        return None, "expired"
+    return entry["user"], "valid"
 
 
 def revoke_token(token: str) -> None:

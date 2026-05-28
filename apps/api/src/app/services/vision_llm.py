@@ -61,25 +61,42 @@ def _build_user_content(
     ocr: OCRResult,
     image_width: int,
     image_height: int,
+    hint: str = "",
 ) -> list[dict[str, Any]]:
     text_payload = {
         "image_dimensions": {"width": image_width, "height": image_height},
         "ocr_lines": ocr.to_prompt_payload(),
     }
-    return [
+    parts: list[dict[str, Any]] = [
         {
             "type": "text",
             "text": json.dumps(text_payload, ensure_ascii=False),
         },
-        {
-            "type": "image_url",
-            # detail="auto" routes diagrams ≤ ~768px through gpt-4o's cheap
-            # tile path — 3–4× faster than "high" with the same extraction
-            # quality on architecture content. Required to fit within the
-            # 45s timeout on the Nov-2024 gpt-4o snapshot.
-            "image_url": {"url": _png_to_data_url(png_bytes), "detail": "auto"},
-        },
     ]
+    if hint.strip():
+        # Architect-driven re-review: the re_reviewer already includes its
+        # own RE-REVIEW MODE preamble + prior-extraction anchors. For raw
+        # plain-text hints we add a short prefix so the model knows what
+        # to do with them.
+        h = hint.strip()
+        if h.startswith("RE-REVIEW MODE"):
+            text = h
+        else:
+            text = (
+                "RE-REVIEW HINT FROM HUMAN ARCHITECT — treat this as ground "
+                "truth about what was wrong in the previous extraction, and "
+                "fix it in this pass:\n\n" + h
+            )
+        parts.append({"type": "text", "text": text})
+    parts.append({
+        "type": "image_url",
+        # detail="auto" routes diagrams ≤ ~768px through gpt-4o's cheap
+        # tile path — 3–4× faster than "high" with the same extraction
+        # quality on architecture content. Required to fit within the
+        # 45s timeout on the Nov-2024 gpt-4o snapshot.
+        "image_url": {"url": _png_to_data_url(png_bytes), "detail": "auto"},
+    })
+    return parts
 
 
 # ---------------------------------------------------------------------------
@@ -196,6 +213,11 @@ _SERVICE_TYPE_SYN = {
     "ldap": "identity",
     "ad": "identity",
     "idp": "identity",
+    "identity_provider": "identity",
+    "active_directory": "identity",
+    "entra": "identity",
+    "entra_id": "identity",
+    "okta": "identity",
     "vault": "secrets_vault",
     "kms": "key_management",
     "log": "logging",
@@ -705,6 +727,7 @@ class MockLLMClient:
         ocr: OCRResult,  # noqa: ARG002
         image_width: int,  # noqa: ARG002
         image_height: int,  # noqa: ARG002
+        hint: str = "",  # noqa: ARG002
     ) -> LLMExtraction:
         return LLMExtraction.model_validate(_mock_extraction_for(png_bytes))
 
@@ -813,11 +836,14 @@ class AzureOpenAIVisionClient:
         ocr: OCRResult,
         image_width: int,
         image_height: int,
+        hint: str = "",
     ) -> LLMExtraction:
         import asyncio
 
         system = _system_prompt()
-        user_content = _build_user_content(png_bytes, ocr, image_width, image_height)
+        user_content = _build_user_content(
+            png_bytes, ocr, image_width, image_height, hint=hint,
+        )
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": system},
             {"role": "user", "content": user_content},

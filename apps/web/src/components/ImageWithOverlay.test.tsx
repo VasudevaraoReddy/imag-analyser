@@ -44,7 +44,9 @@ describe("AnalysisResult fixture parses", () => {
       parsing_warnings: [],
       overall_confidence: 0.5,
       review_state: "needs_human_review",
-      processing_ms: { image_prep: 0, doc_intelligence: 0, vision_llm: 0, post_process: 0, total: 0 },
+      processing_ms: { image_prep: 0, doc_intelligence: 0, vision_llm: 0, post_process: 0, critic: 0, total: 0 },
+      critic_review: { ran: false, duration_ms: 0, overall_assessment: "", critique_confidence: 0, findings: [], summary: {} },
+      re_review_history: [],
     };
     expect(fix.diagram_id).toBe("x");
   });

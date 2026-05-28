@@ -1,20 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Eye, EyeOff, Loader2, LogIn, ShieldCheck } from "lucide-react";
-import { saveAuth } from "../lib/auth";
+import { Clock, Eye, EyeOff, Loader2, LogIn, ShieldCheck } from "lucide-react";
+import { consumeSessionExpiredFlag, saveAuth } from "../lib/auth";
 import { login } from "../lib/api";
 import { YES_BANK_BLUE, YES_BANK_RED, YES_BANK_LOGO } from "../lib/brand";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? "/";
+  const navState = location.state as
+    | { from?: string; expired?: boolean }
+    | null;
+  const from = navState?.from ?? "/";
 
   const [employeeId, setEmployeeId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Show a banner if we arrived here because the session expired.
+  // Two ways that can happen:
+  //   1. RequireAuth navigated us with state.expired = true (in-app).
+  //   2. The user hard-reloaded — we read the sessionStorage flag set
+  //      by lib/auth.markSessionExpired().
+  const [showExpired, setShowExpired] = useState<boolean>(() =>
+    Boolean(navState?.expired) || consumeSessionExpiredFlag(),
+  );
+  useEffect(() => {
+    // If the user starts typing, hide the banner (it's served its purpose).
+    if (showExpired && (employeeId || password)) setShowExpired(false);
+  }, [showExpired, employeeId, password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +138,22 @@ export default function LoginPage() {
               Use your YES BANK employee ID to continue.
             </p>
           </div>
+
+          {showExpired && (
+            <div
+              role="status"
+              className="mt-5 text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 flex items-start gap-2"
+            >
+              <Clock className="w-4 h-4 mt-0.5 shrink-0 text-amber-700" />
+              <div>
+                <div className="font-medium">Your session expired</div>
+                <div className="text-xs text-amber-800/90 mt-0.5">
+                  For security, you've been signed out after 8 hours of
+                  inactivity. Please sign in again to continue.
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div>

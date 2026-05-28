@@ -36,6 +36,35 @@ export function clearAuth() {
   window.dispatchEvent(new Event("bank-arch:auth"));
 }
 
+// Cross-component signal that an API call returned 401 because the
+// architect's session expired (token TTL hit on the server). RequireAuth
+// listens for this and routes to /login with a banner. We use
+// sessionStorage so a hard reload still shows the banner once.
+const SESSION_EXPIRED_KEY = "bank-arch.session-expired";
+
+export function markSessionExpired() {
+  try {
+    sessionStorage.setItem(SESSION_EXPIRED_KEY, "1");
+  } catch {
+    /* sessionStorage can be blocked in some embedded browsers */
+  }
+  clearAuth();
+  window.dispatchEvent(new Event("bank-arch:session-expired"));
+}
+
+export function consumeSessionExpiredFlag(): boolean {
+  try {
+    const flag = sessionStorage.getItem(SESSION_EXPIRED_KEY);
+    if (flag) {
+      sessionStorage.removeItem(SESSION_EXPIRED_KEY);
+      return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
 export function useAuth(): { user: AuthUser | null } {
   const [user, setUser] = useState<AuthUser | null>(() => loadAuth());
   useEffect(() => {

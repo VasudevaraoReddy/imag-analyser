@@ -123,7 +123,7 @@ function JourneyCard({
             </div>
           )}
         </div>
-        <div className="shrink-0 text-right">
+        <div className="shrink-0 text-right flex flex-row gap-1">
           <ScorePill score={journey.score} />
           <EncryptionPill journey={journey} />
         </div>

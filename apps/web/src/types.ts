@@ -14,4 +14,12 @@ export type {
   Journey,
   JourneyHop,
   JourneyKind,
+  CriticFinding,
+  CriticFindingKind,
+  CriticReview,
+  CriticStatus,
+  ArchitectDecision,
+  CandidateExtraction,
+  ReReviewRound,
+  ReReviewStage,
 } from "@bank-arch/shared";

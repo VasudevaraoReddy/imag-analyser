@@ -44,28 +44,47 @@ export function SeverityDot({ severity }: { severity: Severity }) {
   return <span className={clsx("inline-block w-2 h-2 rounded-full", colors[severity])} />;
 }
 
-export function ReviewStatePill({ state }: { state: string }) {
-  const map: Record<string, { cls: string; label: string; Icon: typeof CheckCircle2 }> = {
+export function ReviewStatePill({
+  state,
+  compact = false,
+}: {
+  state: string;
+  /** Use the short label (good for dense tables). Full label is shown on hover. */
+  compact?: boolean;
+}) {
+  const map: Record<
+    string,
+    { cls: string; label: string; short: string; Icon: typeof CheckCircle2 }
+  > = {
     auto_review_recommended: {
       cls: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
       label: "Auto-review recommended",
+      short: "Auto-review",
       Icon: CheckCircle2,
     },
     needs_human_review: {
       cls: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
       label: "Needs human review",
+      short: "Needs review",
       Icon: AlertTriangle,
     },
     rejected: {
       cls: "bg-rose-50 text-rose-700 ring-1 ring-rose-200",
       label: "Rejected",
+      short: "Rejected",
       Icon: AlertOctagon,
     },
   };
-  const m = map[state] ?? { cls: "bg-slate-100 text-slate-700", label: state, Icon: Info };
+  const m =
+    map[state] ?? {
+      cls: "bg-slate-100 text-slate-700",
+      label: state,
+      short: state,
+      Icon: Info,
+    };
   return (
-    <span className={clsx("pill", m.cls)}>
-      <m.Icon className="w-3.5 h-3.5" /> {m.label}
+    <span className={clsx("pill", m.cls)} title={m.label}>
+      <m.Icon className="w-3.5 h-3.5" /> {compact ? m.short : m.label}
     </span>
   );
 }

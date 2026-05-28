@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import clsx from "clsx";
-import { FilePlus2, Library, MessageSquare, ScrollText, Sparkles } from "lucide-react";
+import { Database, FilePlus2, Library, MessageSquare, ScrollText, Sparkles } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
 type Item = {
@@ -29,6 +29,13 @@ const ITEMS: Item[] = [
     label: "Chat Bot",
     caption: "Ask about an architecture",
     Icon: MessageSquare,
+  },
+  {
+    to: "/admin/training-data",
+    label: "Training data",
+    caption: "Approved reviews + learning ledger",
+    Icon: Database,
+    adminOnly: true,
   },
   {
     to: "/admin/usage",

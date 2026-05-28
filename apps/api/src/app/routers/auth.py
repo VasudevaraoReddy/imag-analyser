@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from ..services.auth_service import (
     extract_bearer,
     issue_token,
-    user_for_token,
+    resolve_token,
     verify,
 )
 
@@ -41,12 +41,34 @@ def post_login(req: LoginRequest) -> LoginResponse:
 # ---------------------------------------------------------------------------
 
 def current_user(authorization: str | None = Header(default=None)) -> dict:
-    """Require a valid bearer token; return the public user record."""
+    """Require a valid bearer token; return the public user record.
+
+    On failure raises 401 with a structured body so the frontend can
+    distinguish ``session_expired`` (force-logout + banner) from
+    ``not_authenticated`` (regular 401, no banner).
+    """
     token = extract_bearer(authorization)
-    user = user_for_token(token or "")
-    if user is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    return user
+    user, status = resolve_token(token or "")
+    if user is not None:
+        return user
+    if status == "expired":
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "error": "session_expired",
+                "message": "Your session has expired. Please sign in again.",
+            },
+            headers={"WWW-Authenticate": 'Bearer error="invalid_token", '
+                                          'error_description="The access token expired"'},
+        )
+    raise HTTPException(
+        status_code=401,
+        detail={
+            "error": "not_authenticated",
+            "message": "Not authenticated.",
+        },
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 def current_admin(user: dict = Depends(current_user)) -> dict:
